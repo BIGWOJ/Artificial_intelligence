@@ -1,53 +1,36 @@
-import sac.graph.GraphState;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import sac.graph.BestFirstSearch;
+import sac.graph.GraphSearchConfigurator;
 
 public class Main {
     public static void main(String[] args) {
-        Sudoku sudoku_test = new Sudoku(3);
+        String sudokuTest = "...9348....78.............9..8.....6.2....7.........4.94.38..7.6....9.2.2.5.6.3.4";
+        Sudoku sudoku = new Sudoku(3);
 
-        //Losowe liczby w sudoku
-//        StringBuilder random_numbers = new StringBuilder();
-//        Random random_number = new Random();
-//        for (int i = 0; i < 81; i++){
-//            //random_numbers.append(random_number.nextInt(1,10));
-//            random_numbers.append(random_number.nextInt(9)+1);
-//        }
-//
-//        sudoku_test.fromString(random_numbers.toString());
-//        String sudoku_numbers = sudoku_test.toString();
-//        System.out.println(sudoku_numbers);
+        sudoku.fromString(sudokuTest);
 
+        System.out.println("Sudoku poprawne? " + sudoku.isValid());
+        System.out.println("Liczba niewiadomych: " + sudoku.unknown_counter());
+        System.out.println("Początkowe sudoku:\n" + sudoku);
 
-        //Poprawne liczby w sudoku
-//        String correct_sudoku =
-//                "123456789" +
-//                        "234567891" +
-//                        "345678912" +
-//                        "456789123" +
-//                        "567891234" +
-//                        "678912345" +
-//                        "789123456" +
-//                        "891234567" +
-//                        "912345678";
-//
-//        sudoku_test.fromString(correct_sudoku);
-//        String correct_sudoku_numbers = sudoku_test.toString();
-//        System.out.println(correct_sudoku_numbers);
+        GraphSearchConfigurator configurator = new GraphSearchConfigurator();
+        configurator.setWantedNumberOfSolutions(Integer.MAX_VALUE);
 
+        Sudoku.setHFunction(new Heurystyka());
+        BestFirstSearch bfs = new BestFirstSearch(sudoku, configurator);
+        bfs.setInitial(sudoku);
+        bfs.execute();
 
-        String test = "7.9..4.....4958..........5.34..1.....2...3....91.7.84.....82.......4.3..81...7..2";
-        sudoku_test.fromString(test);
+        int liczba_rozwiazan = bfs.getSolutions().size();
+        System.out.println("Liczba rozwiązań: " + liczba_rozwiazan);
+        if (liczba_rozwiazan == 1) {
+            System.out.println("Rozwiązanie:\n" + bfs.getSolutions());
+        }
+        else {
+            System.out.println("Przykładowe rozwiązanie:\n" + bfs.getSolutions().get(0));
+        }
 
-        System.out.println("Sudoku poprawne?: " + sudoku_test.isValid() + "\n");
-        System.out.println(sudoku_test.toString());
-        System.out.println("Liczba niewiadomych: " + sudoku_test.unknown_counter());
-        //System.out.println(sudoku_test.generateChildren());
-
-
-
-
+        System.out.println("Liczba stanów w zbiorze Open: " + bfs.getOpenSet().size());
+        System.out.println("Liczba stanów w zbiorze Closed: " + bfs.getClosedSet().size());
+        System.out.println("Czas pracy: " + bfs.getDurationTime() + "ms");
     }
 }

@@ -1,13 +1,10 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.math.*;
 import java.util.List;
-import java.util.function.DoubleToIntFunction;
-
 import sac.*;
 import sac.graph.GraphState;
 import sac.graph.GraphStateImpl;
+
 
 public class Sudoku extends GraphStateImpl {
     private char[][] board;
@@ -21,13 +18,13 @@ public class Sudoku extends GraphStateImpl {
     @Override
     public List<GraphState> generateChildren() {
         List<GraphState> lst = new ArrayList<>();
-        for (int i = 0; i < board.length; i++){
-            for (int j = 0; j < board[i].length; j++){
-                if (!Character.isDigit(board[i][j])){
-                    for (int k = 1; k <= board.length; k++){
-                        board[i][j] = (char) (k+'0');
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (!Character.isDigit(board[i][j])) {
+                    for (int k = 1; k <= board.length; k++) {
+                        board[i][j] = (char) (k + '0');
                         unknowns--;
-                        if (isValid()){
+                        if (isValid()) {
                             lst.add(new Sudoku(this));
                         }
                         unknowns++;
@@ -40,14 +37,15 @@ public class Sudoku extends GraphStateImpl {
         return lst;
     }
 
-    public Sudoku(Sudoku state){
+
+    public Sudoku(Sudoku state) {
         super();
-        unknowns = state.unknowns;
-        board = new char[state.board.length][];
-        for (int i = 0; i < board.length; i++){
-            board[i] = java.util.Arrays.copyOf(state.board[i], board[i].length);
+        this.unknowns = state.unknowns;
+        this.board = new char[state.board.length][];
+        for (int i = 0; i < board.length; i++) {
+            this.board[i] = java.util.Arrays.copyOf(state.board[i], state.board[i].length);
         }
-    }
+}
 
     public Sudoku(int n) {
         board = new char[n * n][n * n];
@@ -83,56 +81,45 @@ public class Sudoku extends GraphStateImpl {
 
     boolean isValid() {
         // Sprawdzanie wierszy
-        HashSet<Character> row = new HashSet<>();
         for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board.length; j++) {
+            HashSet<Character> row = new HashSet<>();
+            for (int j = 0; j < board[i].length; j++) {
                 char current = board[i][j];
-                if (row.contains(current) && Character.isDigit(current)) {
+                if (Character.isDigit(current) && row.contains(current)) {
                     return false;
                 }
                 row.add(current);
             }
-            row.clear();
         }
 
         // Sprawdzanie kolumn
-        HashSet<Character> column = new HashSet<>();
         for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board.length; j++) {
+            HashSet<Character> column = new HashSet<>();
+            for (int j = 0; j < board[i].length; j++) {
                 char current = board[j][i];
-                if (column.contains(current) && Character.isDigit(current)) {
+                if (Character.isDigit(current) && column.contains(current)) {
                     return false;
                 }
                 column.add(current);
             }
-            column.clear();
         }
 
         // Sprawdzanie małych kwadratów
-        int n = (int) Math.sqrt(board.length); // n będzie równe 3 dla Sudoku 9x9
-
+        int n = (int) Math.sqrt(board.length);
         for (int blockRow = 0; blockRow < n; blockRow++) {
             for (int blockCol = 0; blockCol < n; blockCol++) {
-                HashSet<Character> mini_square = new HashSet<>();
-                System.out.println(blockRow);
-                // Iteracja po komórkach w danym kwadracie 3x3
-                for (int i = 0; i < n; i++) { // 0, 1, 2
-                    for (int j = 0; j < n; j++) { // 0, 1, 2
-                        //System.out.println(board[i][j]);
+                HashSet<Character> miniSquare = new HashSet<>();
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
                         char current = board[blockRow * n + i][blockCol * n + j];
-
-                        // Sprawdź, czy obecny znak to cyfra i czy już istnieje w mini kwadracie
-                        if (Character.isDigit(current)) {
-                            if (mini_square.contains(current)) {
-                                return false; // Znalazłem duplikat
-                            }
-                            mini_square.add(current); // Dodaj do zbioru
+                        if (Character.isDigit(current) && miniSquare.contains(current)) {
+                            return false;
                         }
+                        miniSquare.add(current);
                     }
                 }
             }
         }
-
         return true;
     }
 
@@ -150,4 +137,16 @@ public class Sudoku extends GraphStateImpl {
     }
 }
 
+class Heurystyka extends StateFunction {
+    @Override
+    public double calculate (State s) {
+        if (s instanceof Sudoku) {
+            Sudoku ss = (Sudoku) s;
+            return ss.unknown_counter();
+        }
+        else {
+            return Double.NaN;
+        }
+    }
+}
 
