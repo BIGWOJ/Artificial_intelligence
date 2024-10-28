@@ -1,12 +1,10 @@
-import sac.*;
 import sac.graph.GraphState;
 import sac.graph.GraphStateImpl;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Puzzle extends GraphStateImpl{
-    private byte[][] board;
+    public byte[][] board;
     private int empty_tile_row = 0;
     private int empty_tile_column = 0;
     int misplaced_tiles_counter;
@@ -75,7 +73,7 @@ public class Puzzle extends GraphStateImpl{
         misplaced_tiles_counter = 0;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                board[i][j] = (byte) (i*n+j);
+                board[i][j] = (byte) (i*n+j+1);
             }
         }
     }
@@ -91,13 +89,32 @@ public class Puzzle extends GraphStateImpl{
     }
 
     int misplaced_tiles() {
-        return misplaced_tiles_counter;
+        int misplaced_counter = 0;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j] != 0 && board[i][j] != (i * board.length + j)+1) {
+                    misplaced_counter++;
+                }
+            }
+        }
+        return misplaced_counter;
     }
 
     //Odległość dla całej planszy
-//    int manhattan() {
-//
-//    }
+    int manhattan_distance() {
+        int manhattan_distance = 0;
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                int current = board[i][j];
+                if (current != 0) {
+                    int correct_row = (current - 1) / board.length;
+                    int correct_column = (current - 1) % board.length;
+                    manhattan_distance += Math.abs(i - correct_row) + Math.abs(j - correct_column);
+                }
+            }
+        }
+        return manhattan_distance;
+    }
 
     @Override
     public String toString() {
@@ -112,12 +129,16 @@ public class Puzzle extends GraphStateImpl{
     }
 
     int hash_code(){
-        return toString().hashCode();
+        String board = toString();
+        return board.hashCode();
     }
 
     boolean isValid() {
         return misplaced_tiles_counter == 0;
     }
+
+
+
 
 
 }
