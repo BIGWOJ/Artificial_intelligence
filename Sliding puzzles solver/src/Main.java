@@ -1,5 +1,5 @@
+import sac.graph.AStar;
 import sac.graph.BestFirstSearch;
-import sac.graph.GraphSearchConfigurator;
 import sac.graph.GraphState;
 
 public class Main {
@@ -15,12 +15,23 @@ public class Main {
         double sum_working_time_mis_tiles = 0;
         int sum_states_open_mis_tiles = 0, sum_states_closed_mis_tiles = 0, sum_path_length_mis_tiles = 0;
 
-
         for (int i = 0; i < test_number; i++) {
             GraphState shuffled_puzzle = puzzle.shuffle(shuffle_number);
 
             //Manhattan distance heuristic
             puzzle.setHFunction(new heuristic_class_manhattan());
+
+            //A* algorithm (more efficient than BestFirstSearch)
+
+//            AStar a_star = new AStar(shuffled_puzzle);
+//            a_star.execute();
+//
+//            sum_working_time_manhattan += a_star.getDurationTime();
+//            sum_states_open_manhattan += a_star.getOpenSet().size();
+//            sum_states_closed_manhattan += a_star.getClosedSet().size();
+//            sum_path_length_manhattan += a_star.getSolutions().get(0).getPath().size();
+
+
             BestFirstSearch bfs = new BestFirstSearch(shuffled_puzzle);
             bfs.execute();
 
