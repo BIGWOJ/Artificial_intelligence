@@ -1,65 +1,94 @@
+import sac.State;
+import sac.StateFunction;
+import sac.graph.AStar;
 import sac.graph.BestFirstSearch;
-import sac.graph.GraphSearchConfigurator;
 import sac.graph.GraphState;
+import sac.graph.GraphStateImpl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class Main {
     public static void main(String[] args) {
         Puzzle puzzle = new Puzzle(3);
-        System.out.println(puzzle);
-        System.out.println(puzzle.misplaced_tiles());
-        System.out.println(puzzle.manhattan_distance());
 
+//        puzzle.from_string("532695841");
+//        System.out.println("Man: " + puzzle.manhattan_distance());
 
-//        String test = "510247863";
-//        puzzle.from_string(test);
-
-//        puzzle.board[0][0] = 5;
-//        puzzle.board[0][1] = 1;
-//        puzzle.board[0][2] = 0;
-//
-//        puzzle.board[1][0] = 2;
-//        puzzle.board[1][1] = 4;
-//        puzzle.board[1][2] = 7;
-//
-//        puzzle.board[2][0] = 8;
-//        puzzle.board[2][1] = 6;
-//        puzzle.board[2][2] = 3;
-
-        System.out.println("Can puzzle be solved? " + puzzle.isSolution());
         System.out.println("Starting puzzle:\n" + puzzle);
 
-        //Giving puzzle to BFS algorithm to solve it
-        puzzle.setHFunction(new Heurystyka());
-        BestFirstSearch bfs = new BestFirstSearch(puzzle);
-        GraphState shuffled_puzzle = puzzle.shuffle(10);
-        bfs.setInitial(shuffled_puzzle);
-        bfs.execute();
+        int test_number = 100, shuffle_number = 1000;
 
-        System.out.println("Number of states in Open: " + bfs.getOpenSet().size());
-        System.out.println("Number of states in Closed: " + bfs.getClosedSet().size());
+        double sum_working_time_manhattan = 0;
+        int sum_states_open_manhattan = 0, sum_states_closed_manhattan = 0, sum_path_length_manhattan = 0;
+
+        double sum_working_time_mis_tiles = 0;
+        int sum_states_open_mis_tiles = 0, sum_states_closed_mis_tiles = 0, sum_path_length_mis_tiles = 0;
+
+        for (int i = 0; i < test_number; i++) {
+            GraphState shuffled_puzzle = puzzle.shuffle(shuffle_number);
+
+            //Manhattan distance heuristic
+            puzzle.setHFunction(new heuristic_class_manhattan());
+
+            //A* algorithm (more efficient than BestFirstSearch)
+
+            AStar a_star = new AStar(shuffled_puzzle);
+            a_star.execute();
+
+            sum_working_time_manhattan += a_star.getDurationTime();
+            sum_states_open_manhattan += a_star.getOpenSet().size();
+            sum_states_closed_manhattan += a_star.getClosedSet().size();
+            sum_path_length_manhattan += a_star.getSolutions().get(0).getPath().size();
 
 
+//            BestFirstSearch bfs = new BestFirstSearch(shuffled_puzzle);
+//            bfs.execute();
 
+//            sum_working_time_manhattan += bfs.getDurationTime();
+//            sum_states_open_manhattan += bfs.getOpenSet().size();
+//            sum_states_closed_manhattan += bfs.getClosedSet().size();
+//            sum_path_length_manhattan += bfs.getSolutions().get(0).getPath().size();
 
-        //ilość odwiedzonych stanów, czas, closed, open
+            //Misplaced tiles heuristic
+            puzzle.setHFunction(new heuristic_class_misplaced());
+            a_star.execute();
+//            bfs = new BestFirstSearch(shuffled_puzzle);
+//            bfs.execute();
 
+//            sum_working_time_mis_tiles += bfs.getDurationTime();
+//            sum_states_open_mis_tiles += bfs.getOpenSet().size();
+//            sum_states_closed_mis_tiles += bfs.getClosedSet().size();
+//            sum_path_length_mis_tiles += bfs.getSolutions().get(0).getPath().size();
 
+                sum_working_time_mis_tiles += a_star.getDurationTime();
+                sum_states_open_mis_tiles += a_star.getOpenSet().size();
+                sum_states_closed_mis_tiles += a_star.getClosedSet().size();
+                sum_path_length_mis_tiles += a_star.getSolutions().get(0).getPath().size();
+        }
 
+        double average_working_time = sum_working_time_manhattan / test_number;
+        int average_states_open = sum_states_open_manhattan / test_number;
+        int average_states_closed = sum_states_closed_manhattan/ test_number;
+        int average_path_length = sum_path_length_manhattan / test_number;
 
+        System.out.println("Manhattan distance heuristic:");
+        System.out.println(String.format("Average working time: %.3f ms", average_working_time));
+        System.out.println("Average number of states in Open: " + average_states_open);
+        System.out.println("Average number of states in Closed: " + average_states_closed);
+        System.out.println("Average path length: " + average_path_length);
 
-//
-//        int solution_numbers = bfs.getSolutions().size();
-//        System.out.println("Number of solutions: " + solution_numbers);
-//        if (solution_numbers == 1) {
-//            System.out.println("Solution:\n" + bfs.getSolutions());
-//        }
-//        else {
-//            System.out.println("Example solution:\n" + bfs.getSolutions().get(0));
-//        }
-//
-//        System.out.println("Number of states in Open: " + bfs.getOpenSet().size());
-//        System.out.println("Number of states in Closed: " + bfs.getClosedSet().size());
-//        System.out.println("Working time: " + bfs.getDurationTime() + "ms");
+        average_working_time = sum_working_time_mis_tiles / test_number;
+        average_states_open = sum_states_open_mis_tiles / test_number;
+        average_states_closed = sum_states_closed_mis_tiles/ test_number;
+        average_path_length = sum_path_length_mis_tiles / test_number;
+
+        System.out.println("\n\nMisplaced tiles heuristic:");
+        System.out.println(String.format("Average working time: %.3f ms", average_working_time));
+        System.out.println("Average number of states in Open: " + average_states_open);
+        System.out.println("Average number of states in Closed: " + average_states_closed);
+        System.out.println("Average path length: " + average_path_length);
+
     }
-
 }
