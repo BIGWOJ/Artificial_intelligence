@@ -1,7 +1,17 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
-//public class Mill extends GameStateImpl
-public class Mill {
+import sac.StateFunction;
+import sac.game.AlphaBetaPruning;
+import sac.game.GameSearchAlgorithm;
+import sac.game.GameState;
+import sac.game.GameStateImpl;
+
+
+
+public class Mill extends GameStateImpl {
+//public class Mill {
 
     public char [][] board = new char[3][8];
     public char white_player = 'W';
@@ -113,4 +123,132 @@ public class Mill {
 
         }
     }
+
+    @Override
+    public List<GameState> generateChildren() {
+        List<GameState> children = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (board[i][j] == ' ') {
+                    Mill child = new Mill();
+                    child.board = this.board.clone();
+                    child.place_piece(i, j, this.white_player);
+                    children.add(child);
+                }
+            }
+        }
+        return children;
+    }
+
+    //Copy constructor while creating children
+//    public Mill(Mill state) {
+//        this.board = state.board.clone();
+//
+//    }
+
+    class heuristic_class extends StateFunction {
+        public double evaluate(Mill state) {
+            int white_pieces = 0;
+            int black_pieces = 0;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 8; j++) {
+                    if (state.board[i][j] == state.white_player) {
+                        white_pieces++;
+                    }
+                    else if (state.board[i][j] == state.black_player) {
+                        black_pieces++;
+                    }
+                }
+            }
+
+            int pieces_diff = white_pieces - black_pieces;
+
+            //Dodać brak możliwości ruchu także jako warunek zwycięstwa
+            if (black_pieces <= 2) {
+                return Double.POSITIVE_INFINITY;
+            }
+            else if (white_pieces <= 2) {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            return pieces_diff;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        StringBuilder board = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 8; j++) {
+                board.append(this.board[i][j]);
+            }
+        }
+        return board.hashCode();
+    }
+
+    public void play() {
+        GameState game = new Mill();
+        GameSearchAlgorithm algorithm = new AlphaBetaPruning();
+
+        String turn;
+        //Human turn
+        boolean maximizing_turn_flag = maximizingTurnNow;
+        maximizing_turn_flag = false;
+        while(!game.isWinTerminal() && !game.isNonWinTerminal()) {
+            List<GameState> children = game.generateChildren();
+            for (GameState child : children) {
+                Scanner scanner = new Scanner(System.in);
+                turn = scanner.nextLine();
+                if(turn.equals(child.getMoveName())) {
+                    game = child;
+                    break;
+                }
+
+                //w razie podanie błędnego ruchu powtórz wczytanie
+                else {
+                    System.out.println("Invalid move. Try again.");
+                    turn = scanner.nextLine();
+                }
+
+                if (game.isWinTerminal() || game.isNonWinTerminal()) {
+                    break;
+                }
+                children = game.generateChildren();
+                algorithm.setInitial(game);
+                algorithm.execute();
+                turn = algorithm.getFirstBestMove();
+
+            }
+        }
+
+        //Computer turn
+        maximizing_turn_flag = true;
+        while(!game.isWinTerminal() && !game.isNonWinTerminal()) {
+            List<GameState> children = game.generateChildren();
+            algorithm.setInitial(game);
+            algorithm.execute();
+            turn = algorithm.getFirstBestMove();
+            for (GameState child : children) {
+                if(turn.equals(child.getMoveName())) {
+                    game = child;
+                    break;
+                }
+
+                else {
+                    turn = algorithm.getFirstBestMove();
+                }
+
+                if (game.isWinTerminal() || game.isNonWinTerminal()) {
+                    break;
+                }
+                children = game.generateChildren();
+                algorithm.setInitial(game);
+                algorithm.execute();
+                turn = algorithm.getFirstBestMove();
+
+            }
+        }
+
+    }
 }
+
