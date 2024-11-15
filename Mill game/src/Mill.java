@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -21,10 +22,14 @@ public class Mill extends GameStateImpl {
     public char [][] board = new char[3][8];
     public static final char white_player = 'W';
     public static final char black_player = 'B';
+    //Może dać, pieces_counter jako white_pieces_counter + black_pieces_counter ??
     public int pieces_counter = 18;
     public int pieces_palced = 0;
-    public int white_pieces_counter = 9;
-    public int black_pieces_counter = 9;
+    public int white_pieces_counter = 0;
+    public int black_pieces_counter = 0;
+    public int whitePiecesToPlace = 9;
+    public int blackPiecesToPlace = 9;
+    int milled = 0;
 
     public Mill(){
         for (int i = 0; i < 3; i++) {
@@ -60,27 +65,26 @@ public class Mill extends GameStateImpl {
         return mill_board.toString();
     }
 
-//    public void place_piece(int row, int col, char player){
-//        if (board[row][col] != ' '){
-//            do {
-//                System.out.println("Position already occupied. Place piece elsewhere.");
-//                Scanner scanner = new Scanner(System.in);
-//                System.out.println("Enter square: ");
-//                row = scanner.nextInt();
-//
-//                System.out.println("Enter column: ");
-//                col = scanner.nextInt();
-//
-//            }
-//            while (board[row][col] != ' ');
-////            System.out.println("asd");
-//            board[row][col] = player;
-//
-//        }
-//        else{
-//            board[row][col] = player;
-//        }
-//    }
+    public void place_piece(int row, int col, char player){
+        if (board[row][col] != ' '){
+            do {
+                System.out.println("Position already occupied. Place piece elsewhere.");
+                Scanner scanner = new Scanner(System.in);
+                System.out.println("Enter square: ");
+                row = scanner.nextInt();
+
+                System.out.println("Enter column: ");
+                col = scanner.nextInt();
+
+            }while (board[row][col] != ' ');
+            System.out.println("asd");
+            board[row][col] = player;
+
+        }
+        else{
+            board[row][col] = player;
+        }
+    }
 
     public int[] invalid_move() {
         Scanner scanner = new Scanner(System.in);
@@ -110,8 +114,7 @@ public class Mill extends GameStateImpl {
                         new_row = invalid_move()[0];
                         new_col = invalid_move()[1];
 
-                    }
-                    while ((new_col != (new_col + 1) % 8) || (new_col != (new_col - 1) % 8) || (new_row != (new_row + 1) % 3) || (new_row != (new_row - 1) % 3));
+                    }while ((new_col != (new_col + 1) % 8) || (new_col != (new_col - 1) % 8) || (new_row != (new_row + 1) % 3) || (new_row != (new_row - 1) % 3));
 
                 }
 
@@ -122,8 +125,7 @@ public class Mill extends GameStateImpl {
                     System.out.println("Invalid move. Place piece elsewhere.");
                     new_row = invalid_move()[0];
                     new_col = invalid_move()[1];
-                }
-                while (new_row != row);
+                }while (new_row != row);
 
             }
 
@@ -133,107 +135,203 @@ public class Mill extends GameStateImpl {
         }
     }
 
-    public boolean mill_created(int row, int col, char player) {
-        //j parzyste - j+/-2 mod 8, jeżeli są trzy jedynki, to jest młynek
-        //j nieparzyste - j+/-1 mod 8 ORAZ i+-1/2 j takie samo, jeżeli są trzy jedynki, to jest młynek
-        if (col % 2 == 0) {
-            if (board[row][(col + 1) % 8] == player && board[row][(col + 2) % 8] == player) {
-                return true;
-            }
-            else if (board[row][(col + 1) % 8] == player && board[row][(col + 6) % 8] == player) {
-                return true;
-            }
-            else if (board[(row + 1)][col] == player && board[(row + 2)][col] == player) {
-                return true;
-            }
-            else if (board[(row - 1)][col] == player && board[(row - 2)][col] == player) {
-                return true;
-            }
+public boolean mill_created(int row, int col, char player) {
+    System.out.println(row + " " + col);
+    //Piece at corner
+    if (col % 2 == 0) {
+        if (board[row][(col + 1) % 8] == player && board[row][(col + 2) % 8] == player) {
+            return true;
         }
-
-        else {
-            if (board[row][(col + 1) % 8] == player && board[row][(col + 2) % 8] == player) {
-                return true;
-            }
-            else if (board[row][(col + 7) % 8] == player && board[row][(col + 6) % 8] == player) {
-                return true;
-            }
-
-            else if (board[(row + 1)][col] == player && board[(row + 2)][col] == player) {
-                return true;
-            }
-
-
-
+        else if (board[row][(col + 7) % 8] == player && board[row][(col + 6) % 8] == player) {
+            return true;
         }
-
-        return false;
     }
 
+    else if (row == 0) {
+        if (board[row][(col + 1) % 8] == player && board[row][(col + 7) % 8] == player) {
+            return true;
+        }
+
+        else if (board[(row + 1)][col] == player && board[(row + 2)][col] == player) {
+            return true;
+        }
+    }
+
+    else if (row == 1) {
+        if (board[row][(col + 1) % 8] == player && board[row][(col + 7) % 8] == player) {
+            return true;
+        }
+
+        else if (board[(row + 1)][col] == player && board[(row - 1)][col] == player) {
+            return true;
+        }
+    }
+
+    else if (row == 2) {
+        if (board[row][(col + 1) % 8] == player && board[row][(col + 7) % 8] == player) {
+            return true;
+        }
+
+        else if (board[(row - 1)][col] == player && board[(row - 2)][col] == player) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+
+
+    public void handle_mill() {
+        boolean pieceRemoved = false;
+        Scanner scanner = new Scanner(System.in);
+        while (!pieceRemoved) {
+            System.out.println("Mill created! Remove an opponent's piece.");
+            System.out.println("Enter row of the piece to remove: ");
+            int row = scanner.nextInt();
+            System.out.println("Enter column of the piece to remove: ");
+            int col = scanner.nextInt();
+            System.out.println(row + ", " + col);
+            if (board[row][col] == (maximizingTurnNow ? black_player : white_player)) {
+                if (maximizingTurnNow) {
+                    black_pieces_counter--;
+                } else {
+                    white_pieces_counter--;
+                }
+                pieces_counter--;
+                board[row][col] = ' ';
+                pieceRemoved = true;
+
+            } else {
+                System.out.println("Invalid piece. Try again.");
+            }
+        }
+    }
 
     @Override
     public List<GameState> generateChildren() {
-        char player = maximizingTurnNow ? 'W' : 'B';
-        char enemy = maximizingTurnNow ? 'B' : 'W';
-        if (pieces_palced != 18) {
-            //pierwsza faza
+        List<GameState> children = new ArrayList<>();
+//        maximizingTurnNow=false;
+        System.out.println( maximizingTurnNow ? 'W' : 'B');
+        // Determine the current phase of the game
+        boolean isPlacementPhase = (whitePiecesToPlace > 0 || blackPiecesToPlace > 0);
+        boolean isJumpingPhase = (white_pieces_counter <= 3 || black_pieces_counter <= 3);
 
-            List<GameState> children = new ArrayList<>();
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 8; j++) {
-                    if (board[i][j] == ' ') {
+        if (isPlacementPhase) {
+            // Placement phase logic
+            for (int square = 0; square < 3; square++) {
+                for (int position = 0; position < 8; position++) {
+                    if (board[square][position] == ' ') {
+                        // Place a piece and create a new GameState
                         Mill child = new Mill(this);
-                        if (mill_created(i, j, player)) {
-                            if (player == 'W') {
-                                child.black_pieces_counter--;
-                            }
 
-                            else {
-                                child.white_pieces_counter--;
-                            }
-
-                            for (int k= 0; k < 3; k++) {
-                                for (int z = 0; z < 8; z++) {
-                                    if ((child.board[i][j] == enemy) && (mill_created(k, z, enemy))) {
-                                        if (mill_created(k, z, enemy)) {
-                                            if (player == 'W') {
-
-                                            }
-
-                                            else {
-
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        child.board[square][position] = maximizingTurnNow ? 'W' : 'B';
+                        if (maximizingTurnNow) {
+                            child.whitePiecesToPlace--;
+                            child.white_pieces_counter++;
                         }
-                        //child.place_piece(i, j, player);
+                        else if (!maximizingTurnNow) {
+                            child.blackPiecesToPlace--;
+                            child.black_pieces_counter++;
+                        }
+                        if (square == 1 && position == 7) {
+                            System.out.println("STOP");
+                        }
+                        if (child.mill_created(square, position, maximizingTurnNow ? 'W' : 'B')) {
+                            System.out.println(square + " " + position);
+                            System.out.println("BLACK: " + black_pieces_counter);
+                            for (int mill_counter = 0; mill_counter < black_pieces_counter; mill_counter++) {
+                                System.out.println("MILL COUNTER: " + mill_counter);
+                                Mill mill_child = new Mill(child);
+                                System.out.println("PRZED:\n "+mill_child);
+                                mill_child.handle_mill();
+                                System.out.println("PO: \n"+mill_child);
+                                children.add(mill_child);
+                            }
+                            //children.add(mill_child);
+                            //children.addAll(mill_child.generateChildren());
+//                            System.out.print("Mill created fgdjihgdfipugdfh");
+                        }
+                        //System.out.println(maximizingTurnNow);
+                        child.toggleTurn();
                         children.add(child);
                     }
                 }
-                return children;
+
+           // Jumping phase logic
+//            for (int i = 0; i < board.length; i++) {
+//                if (board[i] == (maximizingTurnNow ? WHITE : BLACK)) {
+//                    for (int j = 0; j < board.length; j++) {
+//                        if (board[j] == EMPTY) {
+//                            GameStateImpl child = this.clone();
+//                            child.board[i] = EMPTY;
+//                            child.board[j] = maximizingTurnNow ? WHITE : BLACK;
+//                            if (child.formsMill(j)) {
+//                                child.handle_mill();
+//                            }
+//                            child.toggleTurn();
+//                            children.add(child);
+//                        }
+//                    }
+//                }
+//            }
+//        } else {
+//            // Movement phase logic
+//            for (int i = 0; i < board.length; i++) {
+//                if (board[i] == (maximizingTurnNow ? WHITE : BLACK)) {
+//                    for (int neighbor : neighbors[i]) {
+//                        if (board[neighbor] == EMPTY) {
+//                            Mill child = new Mill(this);
+//                            child.board[i] = ' ';
+//                            child.board[neighbor] = maximizingTurnNow ? WHITE : BLACK;
+//                            if (child.formsMill(neighbor)) {
+//                                child.handle_mill();
+//                            }
+//                            child.toggleTurn();
+//                            children.add(child);
+//                        }
+//                    }
+//                }
+//            }
             }
 
         }
+        System.out.println(milled);
+        System.out.println("KONIEC generatedChildren()");
+        return children;
+    }
 
-        else {
-            //druga, trzecia faza
-            //trzecia faza to można przeniść na dowolne puste pole
-            if (maximizingTurnNow) {
-                Mill child = new Mill(this);
-                List<GameState> children = new ArrayList<>();
-                for ()
-                place_piece();
+//        else {
+//            //druga, trzecia faza
+//            //trzecia faza to można przeniść na dowolne puste pole
+//            if (maximizingTurnNow) {
+//                Mill child = new Mill(this);
+//                List<GameState> children = new ArrayList<>();
+//                for ()
+//                place_piece();
+//
+//            }
+//
+//            else {
+//
+//            }
+//        }
 
-            }
+  public static List<GameState> generateChildrenForDepth(GameState state, int depth) {
+    if (depth == 0) {
+        return Collections.singletonList(state);
+    }
+    List<GameState> children = state.generateChildren();
+    List<GameState> allChildren = new ArrayList<>(children);
+    for (GameState child : children) {
+        allChildren.addAll(generateChildrenForDepth(child, depth - 1));
+    }
+    return allChildren;
+}
 
-            else {
-
-            }
-        }
-
-
+    private void toggleTurn() {
+        maximizingTurnNow = !maximizingTurnNow;
     }
 
     //Copy constructor while creating children
@@ -351,7 +449,6 @@ public class Mill extends GameStateImpl {
 
             }
         }
-
     }
 }
 
