@@ -1,40 +1,45 @@
-import java.util.List;
-import sac.game.GameState;
-import sac.game.GameStateImpl;
-
 public class Main {
     public static void main(String[] args) {
 
-        Mill initialState = new Mill();
-        //initialState.initializeBoard();
+        Mill initial_state = new Mill('W');
 
-        initialState.board[0][0] = 'W';
-        initialState.board[0][3] = 'W';
-        initialState.board[1][4] = 'W';
-        initialState.board[1][5] = 'W';
-        initialState.board[1][6] = 'W';
-        initialState.board[2][7] = 'W';
-        initialState.board[2][3] = 'W';
+        //Przykład III z pdfa
+        initial_state.board[0][0] = 'W';
+        initial_state.board[0][3] = 'W';
+        initial_state.board[1][4] = 'W';
+        initial_state.board[1][5] = 'W';
+        initial_state.board[1][6] = 'W';
+        initial_state.board[2][7] = 'W';
+        initial_state.board[2][3] = 'W';
 
-        initialState.board[0][1] = 'B';
-        initialState.board[0][5] = 'B';
-        initialState.board[1][0] = 'B';
-        initialState.board[2][5] = 'B';
-        initialState.black_pieces_counter = 4;
-        initialState.white_pieces_counter = 7;
+        initial_state.board[0][1] = 'B';
+        initial_state.board[0][5] = 'B';
+        initial_state.board[1][0] = 'B';
+        initial_state.board[2][5] = 'B';
+        initial_state.black_pieces_counter = 4;
+        initial_state.white_pieces_counter = 7;
+        initial_state.white_pieces_to_place = 0;
+        initial_state.black_pieces_to_place = 0;
 
+
+
+//        initial_state.board[0][1] = 'W';
+//        initial_state.white_pieces_counter = 1;
 
 
 
         System.out.println("Initial State:");
-        System.out.println(initialState);
-        int glebokosc = 1;
+        System.out.println(initial_state);
 
-        List<GameState> children = initialState.generateChildren();
-        System.out.println("Liczba stanów: " + children.size());
+//        //List<GameState> children = initial_state.generateChildren();
+//        List<GameState> children = Mill.generateChildrenForDepth(initial_state, glebokosc);
+//        System.out.println("Liczba stanów: " + children.size());
 
 
-
+        for (int depth = 1; depth <= 6; depth++) {
+            int totalStates = Mill.calculate_states(initial_state, depth);
+            System.out.println("Total states at depth " + depth + ": " + totalStates);
+        }
 
 
 

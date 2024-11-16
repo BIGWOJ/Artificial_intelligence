@@ -1,11 +1,8 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
 import sac.StateFunction;
-import sac.game.AlphaBetaPruning;
-import sac.game.GameSearchAlgorithm;
 import sac.game.GameState;
 import sac.game.GameStateImpl;
 
@@ -13,35 +10,21 @@ import sac.game.GameStateImpl;
 //jeżeli wszystkie pozostałe są w młynku to można zbić dowolny
 
 
-
-
-
 public class Mill extends GameStateImpl {
-//public class Mill {
 
     public char [][] board = new char[3][8];
     public static final char white_player = 'W';
     public static final char black_player = 'B';
-    //Może dać, pieces_counter jako white_pieces_counter + black_pieces_counter ??
-    public int pieces_counter = 18;
-    public int pieces_palced = 0;
     public int white_pieces_counter = 0;
     public int black_pieces_counter = 0;
-    public int whitePiecesToPlace = 9;
-    public int blackPiecesToPlace = 9;
-    int milled = 0;
+    public int white_pieces_to_place = 9;
+    public int black_pieces_to_place = 9;
 
-    public Mill(){
+    public Mill(char first_turn){
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 8; j++) {
                 board[i][j] = ' ';
-
-//                StringBuilder position = new StringBuilder();
-//                position.append(i);
-//                position.append(j);
-//                board[i][j] = position.toString().charAt(0);
-//                board[i][j] = position.toString().charAt(1);
-
+                maximizingTurnNow = first_turn == 'W';
             }
         }
     }
@@ -77,7 +60,7 @@ public class Mill extends GameStateImpl {
                 col = scanner.nextInt();
 
             }while (board[row][col] != ' ');
-            System.out.println("asd");
+            //System.out.println("asd");
             board[row][col] = player;
 
         }
@@ -135,8 +118,8 @@ public class Mill extends GameStateImpl {
         }
     }
 
-public boolean mill_created(int row, int col, char player) {
-    System.out.println(row + " " + col);
+    public boolean mill_created(int row, int col, char player) {
+
     //Piece at corner
     if (col % 2 == 0) {
         if (board[row][(col + 1) % 8] == player && board[row][(col + 2) % 8] == player) {
@@ -180,31 +163,71 @@ public boolean mill_created(int row, int col, char player) {
     return false;
 }
 
+    public List<Mill> handle_mill_generate_children() {
+        List<Mill> mill_children = new ArrayList<>();
 
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (board[i][j] == (maximizingTurnNow ? 'B' : 'W')) {
+                    Mill mill_child = new Mill(this);
+                    mill_child.board[i][j] = ' ';
 
+                    if (maximizingTurnNow) {
+                        mill_child.black_pieces_counter--;
+                    }
+                    else {
+                        mill_child.white_pieces_counter--;
+                    }
 
-    public void handle_mill() {
+                    //Change maximizingTurnNow flag
+                    mill_child.maximizingTurnNow = !this.maximizingTurnNow;
+                    mill_children.add(mill_child);
+                }
+            }
+        }
+
+        return mill_children;
+    }
+    
+    public void handle_mill(boolean test) {
         boolean pieceRemoved = false;
         Scanner scanner = new Scanner(System.in);
         while (!pieceRemoved) {
-            System.out.println("Mill created! Remove an opponent's piece.");
-            System.out.println("Enter row of the piece to remove: ");
-            int row = scanner.nextInt();
-            System.out.println("Enter column of the piece to remove: ");
-            int col = scanner.nextInt();
-            System.out.println(row + ", " + col);
-            if (board[row][col] == (maximizingTurnNow ? black_player : white_player)) {
+            int row = 0;
+            int col = 0;
+            if (!test) {
+                System.out.println("Mill created! Remove an opponent's piece.");
+                System.out.println("Enter row of the piece to remove: ");
+                row = scanner.nextInt();
+                System.out.println("Enter column of the piece to remove: ");
+                col = scanner.nextInt();
+            }
+            else {
+                outerLoop:
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 8; j++) {
+                        if (board[i][j] == (maximizingTurnNow ? 'B' : 'W')) {
+                            row = i;
+                            col = j;
+                            break outerLoop;
+                        }
+                    }
+                }
+            }
+
+            if (board[row][col] == (maximizingTurnNow ? 'B' : 'W')) {
                 if (maximizingTurnNow) {
                     black_pieces_counter--;
                 } else {
                     white_pieces_counter--;
                 }
-                pieces_counter--;
+
                 board[row][col] = ' ';
                 pieceRemoved = true;
-
             } else {
-                System.out.println("Invalid piece. Try again.");
+                if (!test) {
+                    System.out.println("Invalid piece. Try again.");
+                }
             }
         }
     }
@@ -212,132 +235,128 @@ public boolean mill_created(int row, int col, char player) {
     @Override
     public List<GameState> generateChildren() {
         List<GameState> children = new ArrayList<>();
-//        maximizingTurnNow=false;
-        System.out.println( maximizingTurnNow ? 'W' : 'B');
-        // Determine the current phase of the game
-        boolean isPlacementPhase = (whitePiecesToPlace > 0 || blackPiecesToPlace > 0);
-        boolean isJumpingPhase = (white_pieces_counter <= 3 || black_pieces_counter <= 3);
 
-        if (isPlacementPhase) {
-            // Placement phase logic
+        boolean is_placement_phase = (white_pieces_to_place > 0 || black_pieces_to_place > 0);
+        boolean is_moving_phase = (white_pieces_to_place == 0 && black_pieces_to_place == 0);
+
+        //Placement phase
+        if (is_placement_phase) {
             for (int square = 0; square < 3; square++) {
                 for (int position = 0; position < 8; position++) {
                     if (board[square][position] == ' ') {
-                        // Place a piece and create a new GameState
                         Mill child = new Mill(this);
 
                         child.board[square][position] = maximizingTurnNow ? 'W' : 'B';
                         if (maximizingTurnNow) {
-                            child.whitePiecesToPlace--;
+                            child.white_pieces_to_place--;
                             child.white_pieces_counter++;
                         }
-                        else if (!maximizingTurnNow) {
-                            child.blackPiecesToPlace--;
+                        else {
+                            child.black_pieces_to_place--;
                             child.black_pieces_counter++;
                         }
-                        if (square == 1 && position == 7) {
-                            System.out.println("STOP");
-                        }
+
                         if (child.mill_created(square, position, maximizingTurnNow ? 'W' : 'B')) {
-                            System.out.println(square + " " + position);
-                            System.out.println("BLACK: " + black_pieces_counter);
-                            for (int mill_counter = 0; mill_counter < black_pieces_counter; mill_counter++) {
-                                System.out.println("MILL COUNTER: " + mill_counter);
-                                Mill mill_child = new Mill(child);
-                                System.out.println("PRZED:\n "+mill_child);
-                                mill_child.handle_mill();
-                                System.out.println("PO: \n"+mill_child);
-                                children.add(mill_child);
-                            }
-                            //children.add(mill_child);
-                            //children.addAll(mill_child.generateChildren());
-//                            System.out.print("Mill created fgdjihgdfipugdfh");
+                            List<Mill> millChildren = child.handle_mill_generate_children();
+                            children.addAll(millChildren);
                         }
-                        //System.out.println(maximizingTurnNow);
-                        child.toggleTurn();
-                        children.add(child);
+                        else {
+                            //No mill created, change maximizingTurnNow flag
+                            child.maximizingTurnNow = !child.maximizingTurnNow;
+                            children.add(child);
+                        }
                     }
                 }
-
-           // Jumping phase logic
-//            for (int i = 0; i < board.length; i++) {
-//                if (board[i] == (maximizingTurnNow ? WHITE : BLACK)) {
-//                    for (int j = 0; j < board.length; j++) {
-//                        if (board[j] == EMPTY) {
-//                            GameStateImpl child = this.clone();
-//                            child.board[i] = EMPTY;
-//                            child.board[j] = maximizingTurnNow ? WHITE : BLACK;
-//                            if (child.formsMill(j)) {
-//                                child.handle_mill();
-//                            }
-//                            child.toggleTurn();
-//                            children.add(child);
-//                        }
-//                    }
-//                }
-//            }
-//        } else {
-//            // Movement phase logic
-//            for (int i = 0; i < board.length; i++) {
-//                if (board[i] == (maximizingTurnNow ? WHITE : BLACK)) {
-//                    for (int neighbor : neighbors[i]) {
-//                        if (board[neighbor] == EMPTY) {
-//                            Mill child = new Mill(this);
-//                            child.board[i] = ' ';
-//                            child.board[neighbor] = maximizingTurnNow ? WHITE : BLACK;
-//                            if (child.formsMill(neighbor)) {
-//                                child.handle_mill();
-//                            }
-//                            child.toggleTurn();
-//                            children.add(child);
-//                        }
-//                    }
-//                }
-//            }
             }
-
         }
-        System.out.println(milled);
-        System.out.println("KONIEC generatedChildren()");
+
+        //Moving phase
+        if (is_moving_phase) {
+            for (int square = 0; square < 3; square++) {
+                for (int position = 0; position < 8; position++) {
+                    //Check if the current position has the current player's piece
+                    if (board[square][position] == (maximizingTurnNow ? 'W' : 'B')) {
+                        //Iterate over all neighbors of this position
+                        for (int[] neighbor : get_neighbors(square, position)) {
+                            int neighborSquare = neighbor[0];
+                            int neighborPosition = neighbor[1];
+
+                            // Check if the neighbor position is empty
+                            if (board[neighborSquare][neighborPosition] == ' ') {
+                                Mill child = new Mill(this);
+
+                                // Move the piece to the new position
+                                child.board[square][position] = ' ';
+                                child.board[neighborSquare][neighborPosition] = maximizingTurnNow ? 'W' : 'B';
+
+                                // Check if this move creates a mill
+                                if (child.mill_created(neighborSquare, neighborPosition, maximizingTurnNow ? 'W' : 'B')) {
+                                    List<Mill> millChildren = child.handle_mill_generate_children();
+                                    children.addAll(millChildren);
+                                } else {
+                                    // No mill created, toggle turn
+                                    child.maximizingTurnNow = !child.maximizingTurnNow;
+                                    children.add(child);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         return children;
     }
 
-//        else {
-//            //druga, trzecia faza
-//            //trzecia faza to można przeniść na dowolne puste pole
-//            if (maximizingTurnNow) {
-//                Mill child = new Mill(this);
-//                List<GameState> children = new ArrayList<>();
-//                for ()
-//                place_piece();
-//
-//            }
-//
-//            else {
-//
-//            }
-//        }
+    public List<int[]> get_neighbors(int square, int position) {
+        List<int[]> neighbors = new ArrayList<>();
 
-  public static List<GameState> generateChildrenForDepth(GameState state, int depth) {
-    if (depth == 0) {
-        return Collections.singletonList(state);
-    }
-    List<GameState> children = state.generateChildren();
-    List<GameState> allChildren = new ArrayList<>(children);
-    for (GameState child : children) {
-        allChildren.addAll(generateChildrenForDepth(child, depth - 1));
-    }
-    return allChildren;
-}
+        //The same square neighbors
+        neighbors.add(new int[]{square, (position + 1) % 8});
+        neighbors.add(new int[]{square, (position + 7) % 8});
 
-    private void toggleTurn() {
-        maximizingTurnNow = !maximizingTurnNow;
+        //Next square neighbors
+        if (position % 2 == 1) {
+            if (square > 0) neighbors.add(new int[]{square - 1, position});
+            if (square < 2) neighbors.add(new int[]{square + 1, position});
+        }
+
+        System.out.println("Neighbors for [" + square + ", " + position + "]:");
+        for (int[] neighbor : neighbors) {
+            System.out.println("\tNeighbor: [" + neighbor[0] + ", " + neighbor[1] + "]");
+        }
+        System.out.println("\n\n");
+        return neighbors;
+    }
+
+    public static int calculate_states(Mill state, int depth) {
+        if (depth == 0) {
+            return 1;
+        }
+
+        //Generate children of the current state
+        List<GameState> children = state.generateChildren();
+        int total_states = 0;
+
+        //Recursively compute states for all children
+        for (GameState child : children) {
+            total_states += calculate_states((Mill) child, depth - 1);
+        }
+
+        return total_states;
+
+
     }
 
     //Copy constructor while creating children
     public Mill(Mill state) {
         this.board = new char[3][8];
-        this.pieces_counter = state.pieces_counter;
+        this.white_pieces_counter = state.white_pieces_counter;
+        this.black_pieces_counter = state.black_pieces_counter;
+        this.maximizingTurnNow = state.maximizingTurnNow;
+        this.white_pieces_to_place = state.white_pieces_to_place;
+        this.black_pieces_to_place = state.black_pieces_to_place;
+
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 8; j++) {
                 this.board[i][j] = state.board[i][j];
@@ -385,70 +404,70 @@ public boolean mill_created(int row, int col, char player) {
         return board.hashCode();
     }
 
-    public void play() {
-        GameState game = new Mill();
-        GameSearchAlgorithm algorithm = new AlphaBetaPruning();
-
-        String turn;
-        //Human turn
-        //boolean maximizing_turn_flag = maximizingTurnNow;
-        maximizingTurnNow = true;
-        //sac.game.maximizingTurnNow = maximizing_turn_flag;
-        //maximizing_turn_flag = false;
-        while(!game.isWinTerminal() && !game.isNonWinTerminal()) {
-            List<GameState> children = game.generateChildren();
-            for (GameState child : children) {
-                Scanner scanner = new Scanner(System.in);
-                turn = scanner.nextLine();
-                if(turn.equals(child.getMoveName())) {
-                    game = child;
-                    break;
-                }
-
-                //W razie podanie błędnego ruchu powtórz wczytanie
-                else {
-                    System.out.println("Invalid move. Try again.");
-                    turn = scanner.nextLine();
-                }
-
-                if (game.isWinTerminal() || game.isNonWinTerminal()) {
-                    break;
-                }
-                children = game.generateChildren();
-                algorithm.setInitial(game);
-                algorithm.execute();
-                turn = algorithm.getFirstBestMove();
-
-            }
-        }
+//    public void play() {
+//        GameState game = new Mill();
+//        GameSearchAlgorithm algorithm = new AlphaBetaPruning();
+//
+//        String turn;
+//        //Human turn
+//        //boolean maximizing_turn_flag = maximizingTurnNow;
+//        maximizingTurnNow = true;
+//        //sac.game.maximizingTurnNow = maximizing_turn_flag;
+//        //maximizing_turn_flag = false;
+//        while(!game.isWinTerminal() && !game.isNonWinTerminal()) {
+//            List<GameState> children = game.generateChildren();
+//            for (GameState child : children) {
+//                Scanner scanner = new Scanner(System.in);
+//                turn = scanner.nextLine();
+//                if(turn.equals(child.getMoveName())) {
+//                    game = child;
+//                    break;
+//                }
+//
+//                //W razie podanie błędnego ruchu powtórz wczytanie
+//                else {
+//                    System.out.println("Invalid move. Try again.");
+//                    turn = scanner.nextLine();
+//                }
+//
+//                if (game.isWinTerminal() || game.isNonWinTerminal()) {
+//                    break;
+//                }
+//                children = game.generateChildren();
+//                algorithm.setInitial(game);
+//                algorithm.execute();
+//                turn = algorithm.getFirstBestMove();
+//
+//            }
+//        }
 
         //Computer turn
         //maximizing_turn_flag = true;
-        while(!game.isWinTerminal() && !game.isNonWinTerminal()) {
-            List<GameState> children = game.generateChildren();
-            algorithm.setInitial(game);
-            algorithm.execute();
-            turn = algorithm.getFirstBestMove();
-            for (GameState child : children) {
-                if(turn.equals(child.getMoveName())) {
-                    game = child;
-                    break;
-                }
-
-                else {
-                    turn = algorithm.getFirstBestMove();
-                }
-
-                if (game.isWinTerminal() || game.isNonWinTerminal()) {
-                    break;
-                }
-                children = game.generateChildren();
-                algorithm.setInitial(game);
-                algorithm.execute();
-                turn = algorithm.getFirstBestMove();
-
-            }
-        }
-    }
+//        while(!game.isWinTerminal() && !game.isNonWinTerminal()) {
+//            List<GameState> children = game.generateChildren();
+//            algorithm.setInitial(game);
+//            algorithm.execute();
+//            turn = algorithm.getFirstBestMove();
+//            for (GameState child : children) {
+//                if(turn.equals(child.getMoveName())) {
+//                    game = child;
+//                    break;
+//                }
+//
+//                else {
+//                    turn = algorithm.getFirstBestMove();
+//                }
+//
+//                if (game.isWinTerminal() || game.isNonWinTerminal()) {
+//                    break;
+//                }
+//                children = game.generateChildren();
+//                algorithm.setInitial(game);
+//                algorithm.execute();
+//                turn = algorithm.getFirstBestMove();
+//
+//            }
+//        }
+//    }
 }
 
