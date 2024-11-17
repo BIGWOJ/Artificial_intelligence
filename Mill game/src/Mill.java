@@ -168,7 +168,8 @@ public class Mill extends GameStateImpl {
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 8; j++) {
-                if (board[i][j] == (maximizingTurnNow ? 'B' : 'W')) {
+                if ((board[i][j] == (maximizingTurnNow ? 'B' : 'W')) && !mill_created(i, j, maximizingTurnNow ? 'B' : 'W')) {
+                    //System.out.println("Removing piece from [" + i + ", " + j + "]");
                     Mill mill_child = new Mill(this);
                     mill_child.board[i][j] = ' ';
 
@@ -238,6 +239,7 @@ public class Mill extends GameStateImpl {
 
         boolean is_placement_phase = (white_pieces_to_place > 0 || black_pieces_to_place > 0);
         boolean is_moving_phase = (white_pieces_to_place == 0 && black_pieces_to_place == 0);
+        boolean is_jumping_phase = (white_pieces_counter == 3 || black_pieces_counter == 3);
 
         //Placement phase
         if (is_placement_phase) {
@@ -271,7 +273,41 @@ public class Mill extends GameStateImpl {
         }
 
         //Moving phase
-        if (is_moving_phase) {
+         if (is_moving_phase) {
+            for (int square = 0; square < 3; square++) {
+                for (int position = 0; position < 8; position++) {
+                    //Check if the current position has the current player's piece
+                    if (board[square][position] == (maximizingTurnNow ? 'W' : 'B')) {
+                        //Iterate over all neighbors of this position
+                        //System.out.println(square + ", " + position);
+                        for (int[] neighbor : get_neighbors(square, position)) {
+                            //System.out.println("\t" + neighbor[0] + ", " + neighbor[1]);
+                            int neighbor_square = neighbor[0];
+                            int neighbor_position = neighbor[1];
+
+                            if (board[neighbor_square][neighbor_position] == ' ') {
+                                Mill child = new Mill(this);
+                                //System.out.println("Moving piece from [" + square + ", " + position + "] to [" + neighbor_square + ", " + neighbor_position + "]");
+                                child.board[square][position] = ' ';
+                                child.board[neighbor_square][neighbor_position] = maximizingTurnNow ? 'W' : 'B';
+
+                                if (child.mill_created(neighbor_square, neighbor_position, maximizingTurnNow ? 'W' : 'B')) {
+                                    List<Mill> mill_children = child.handle_mill_generate_children();
+                                    children.addAll(mill_children);
+                                }
+                                else {
+                                    //No mill created, change maximizingTurnNow flag
+                                    child.maximizingTurnNow = !child.maximizingTurnNow;
+                                    children.add(child);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (is_jumping_phase) {
             for (int square = 0; square < 3; square++) {
                 for (int position = 0; position < 8; position++) {
                     //Check if the current position has the current player's piece
