@@ -1,1 +1,0 @@
-1. Żeby działał poprawnie III przykład z pdfa musi działać też 3. faza gry - jumping_phase, bo po usunięciu przez białego czarnego - zostaje 4 i mogą skakać
