@@ -73,7 +73,7 @@ public class Main {
         //int i = 0;
         //for (GameState t : initial_state.generateChildren()) {
             //for (GameState t2 : t.generateChildren()) {
-                for (int depth = 1; depth <= 3; depth++) {
+                for (int depth = 1; depth <= 6; depth++) {
                     //int totalStates = Mill.calculate_states((Mill) t2, 1);
                     //((Mill) t2).toStr();
                     int totalStates = Mill.calculate_states(initial_state, depth);
