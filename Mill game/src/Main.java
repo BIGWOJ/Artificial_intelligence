@@ -1,3 +1,5 @@
+import sac.game.GameState;
+
 public class Main {
     public static void main(String[] args) {
 
@@ -38,23 +40,51 @@ public class Main {
         initial_state.black_pieces_to_place = 0;
 
 
+//        initial_state.board[0][0] = 'W';
+//        initial_state.board[0][3] = 'W';
+//        initial_state.board[1][3] = 'W';
+//        initial_state.board[1][5] = 'W';
+//        initial_state.board[1][6] = 'W';
+//        initial_state.board[2][7] = 'W';
+//        initial_state.board[2][3] = 'W';
+//
+//        initial_state.board[0][1] = 'B';
+//        initial_state.board[1][2] = 'B';
+//        initial_state.board[2][5] = 'B';
+
+//        initial_state.black_pieces_counter = 3;
+//        initial_state.white_pieces_counter = 7;
+//        initial_state.white_pieces_to_place = 0;
+//        initial_state.black_pieces_to_place = 0;
+
+
+
+        ;
           //Dodatkowo, aby powstał młynek dla czarnych
 //        initial_state.board[1][2] = 'B';
 //        initial_state.black_pieces_to_place++;
-
+       // System.out.println(initial_state + "\n\n");
 
         //System.out.println("Initial State:");
-        //System.out.println(initial_state);
+        //System.out.println(initial_state.generateChildren());
 
 
 
+        //int i = 0;
+        //for (GameState t : initial_state.generateChildren()) {
+            //for (GameState t2 : t.generateChildren()) {
+                for (int depth = 1; depth <= 3; depth++) {
+                    //int totalStates = Mill.calculate_states((Mill) t2, 1);
+                    //((Mill) t2).toStr();
+                    int totalStates = Mill.calculate_states(initial_state, depth);
+                    System.out.println("Total states at depth " + depth + ": " + totalStates);
+                    //System.out.println(" | " + totalStates);
+                    //System.out.println();
+                }
+            //}
+        //}
 
-        for (int depth = 1; depth <= 5; depth++) {
-            int totalStates = Mill.calculate_states(initial_state, depth);
-            System.out.println("Total states at depth " + depth + ": " + totalStates);
-        }
-
-
+        System.exit(0);
 
 
         //Testowanie get_neighbours
@@ -69,18 +99,18 @@ public class Main {
 //        }
 
         //Testowanie get_available_jumps
-//        StringBuilder a = new StringBuilder();
-//        for (int square = 0; square < 3; square++) {
-//            for (int position = 0; position < 8; position++) {
-//                //System.out.println(square + ", " + position);
-//                for (int[] jump : initial_state.get_available_jumps()) {
-//                    //System.out.println("\t" + jump[0] + ", " + jump[1]);
-//                    a.append(jump[0]);
-//                    a.append(jump[1]);
-//                }
-//                //System.out.println();
-//            }
-//        }
+        //StringBuilder a = new StringBuilder();
+        for (int square = 0; square < 3; square++) {
+            for (int position = 0; position < 8; position++) {
+                System.out.println(square + ", " + position);
+                for (int[] jump : initial_state.get_available_jumps()) {
+                    System.out.println("\t" + jump[0] + ", " + jump[1]);
+                    //a.append(jump[0]);
+                    //a.append(jump[1]);
+                }
+                System.out.println();
+            }
+        }
 //        //System.out.println(a);
 
 

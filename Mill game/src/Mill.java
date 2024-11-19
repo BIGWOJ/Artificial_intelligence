@@ -166,18 +166,21 @@ public class Mill extends GameStateImpl {
      public List<Mill> handle_mill_generate_children() {
         List<Mill> mill_children = new ArrayList<>();
 
-        for (int i = 0; i < 3; i++) {
+         boolean piece_removed = false;
+         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 8; j++) {
-                if (board[i][j] == (maximizingTurnNow ? 'B' : 'W')) {
+
+                if (board[i][j] == (maximizingTurnNow ? 'B' : 'W') && !mill_created(i, j, maximizingTurnNow ? 'B' : 'W')) {
                     Mill mill_child = new Mill(this);
                     mill_child.board[i][j] = ' ';
 
-                    if (maximizingTurnNow) {
-                        mill_child.black_pieces_counter--;
-                    }
-                    else {
-                        mill_child.white_pieces_counter--;
-                    }
+                    piece_removed = true;
+                        if (maximizingTurnNow) {
+                            mill_child.black_pieces_counter--;
+                        }
+                        else {
+                            mill_child.white_pieces_counter--;
+                        }
 
                     //Change maximizingTurnNow flag
                     mill_child.maximizingTurnNow = !this.maximizingTurnNow;
@@ -185,6 +188,30 @@ public class Mill extends GameStateImpl {
                 }
             }
         }
+
+         //All pieces are in mill - remove any piece
+         if(!piece_removed) {
+             for (int i = 0; i < 3; i++) {
+                 for (int j = 0; j < 8; j++) {
+
+                     if (board[i][j] == (maximizingTurnNow ? 'B' : 'W')) {
+                         Mill mill_child = new Mill(this);
+                         mill_child.board[i][j] = ' ';
+
+                         if (maximizingTurnNow) {
+                             mill_child.black_pieces_counter--;
+                         }
+                         else {
+                             mill_child.white_pieces_counter--;
+                         }
+
+                         //Change maximizingTurnNow flag
+                         mill_child.maximizingTurnNow = !this.maximizingTurnNow;
+                         mill_children.add(mill_child);
+                     }
+                 }
+             }
+         }
 
         return mill_children;
     }
@@ -238,7 +265,11 @@ public class Mill extends GameStateImpl {
 
         boolean is_placement_phase = (white_pieces_to_place > 0 || black_pieces_to_place > 0);
         boolean is_moving_phase = (white_pieces_to_place == 0 && black_pieces_to_place == 0);
-        boolean is_jumping_phase = (white_pieces_counter <= 3 || black_pieces_counter <= 3) && !is_placement_phase && !is_moving_phase;
+        boolean is_jumping_phase = (maximizingTurnNow && white_pieces_counter == 3 || !maximizingTurnNow && black_pieces_counter == 3) && is_moving_phase;
+
+        if ((white_pieces_counter <3) || (black_pieces_counter < 3)) {
+            return children;
+        }
 
         //System.out.println(is_placement_phase + " " + is_moving_phase + " " + is_jumping_phase);
 
@@ -274,10 +305,11 @@ public class Mill extends GameStateImpl {
         }
 
         //Moving phase
-         if (is_moving_phase) {
+         else if (!is_jumping_phase) {
             for (int square = 0; square < 3; square++) {
                 for (int position = 0; position < 8; position++) {
                     if (board[square][position] == (maximizingTurnNow ? 'W' : 'B')) {
+
                         //Iterate over all neighbors of this position
                         //System.out.println(square + ", " + position);
                         for (int[] neighbor : get_neighbors(square, position)) {
@@ -287,6 +319,7 @@ public class Mill extends GameStateImpl {
 
                             if (board[neighbor_square][neighbor_position] == ' ') {
                                 Mill child = new Mill(this);
+                                //System.out.println(child);
                                 //System.out.println("Moving piece from [" + square + ", " + position + "] to [" + neighbor_square + ", " + neighbor_position + "]");
                                 child.board[square][position] = ' ';
                                 child.board[neighbor_square][neighbor_position] = maximizingTurnNow ? 'W' : 'B';
@@ -308,7 +341,7 @@ public class Mill extends GameStateImpl {
         }
 
         //Jumping phase
-        if (is_jumping_phase) {
+        else {
             for (int square = 0; square < 3; square++) {
                 for (int position = 0; position < 8; position++) {
                     if (board[square][position] == (maximizingTurnNow ? 'W' : 'B')) {
@@ -318,6 +351,7 @@ public class Mill extends GameStateImpl {
                             int new_position = available_move[1];
 
                             Mill child = new Mill(this);
+                            //System.out.println(child);
                             child.board[square][position] = ' ';
                             child.board[new_square][new_position] = maximizingTurnNow ? 'W' : 'B';
 
@@ -375,14 +409,16 @@ public class Mill extends GameStateImpl {
     }
 
     public static int calculate_states(Mill state, int depth) {
+        //System.out.println(state);
         if (depth == 0) {
+            //state.toStr();
             return 1;
         }
 
         //Generate children of the current state
         List<GameState> children = state.generateChildren();
         int total_states = 0;
-       // System.out.println(state);
+
         //Recursively compute states for all children
         for (GameState child : children) {
             total_states += calculate_states((Mill) child, depth - 1);
@@ -408,6 +444,30 @@ public class Mill extends GameStateImpl {
             }
         }
     }
+
+    public void toStr() {
+        for (int i = 0; i <3; i++) {
+            for(int j = 0; j < 8; j++) {
+                if(board[i][j] == 'W') {
+                    System.out.print(i*8+j + " ");
+                }
+
+            }
+        }
+        System.out.print("|");
+
+        for (int i = 0; i <3; i++) {
+            for(int j = 0; j < 8; j++) {
+                if(board[i][j] == 'B') {
+                    System.out.print(" " + (i*8+j));
+                }
+
+            }
+        }
+
+    //System.out.println();
+    }
+
 
     class heuristic_class extends StateFunction {
         public double evaluate(Mill state) {
