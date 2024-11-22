@@ -3,7 +3,7 @@ import sac.game.GameState;
 public class Main {
     public static void main(String[] args) {
 
-        Mill initial_state = new Mill('W');
+        Mill initial_state = new Mill('B');
 
 //        int white_pieces_counter = 4;
 //        int black_pieces_counter = 4;
@@ -21,23 +21,25 @@ public class Main {
 //       initial_state.white_pieces_to_place = 8;
 
         //Przykład III z pdfa
-        initial_state.board[0][0] = 'W';
-        initial_state.board[0][3] = 'W';
-        initial_state.board[1][4] = 'W';
-        initial_state.board[1][5] = 'W';
-        initial_state.board[1][6] = 'W';
-        initial_state.board[2][7] = 'W';
-        initial_state.board[2][3] = 'W';
+//        initial_state.board[0][0] = 'W';
+//        initial_state.board[0][3] = 'W';
+//        initial_state.board[1][4] = 'W';
+//        initial_state.board[1][5] = 'W';
+//        initial_state.board[1][6] = 'W';
+//        initial_state.board[2][7] = 'W';
+//        initial_state.board[2][3] = 'W';
+//
+//        initial_state.board[0][1] = 'B';
+//        initial_state.board[0][5] = 'B';
+//        initial_state.board[1][0] = 'B';
+//        initial_state.board[2][5] = 'B';
+//
+//        initial_state.black_pieces_counter = 4;
+//        initial_state.white_pieces_counter = 7;
+//        initial_state.white_pieces_to_place = 0;
+//        initial_state.black_pieces_to_place = 0;
 
-        initial_state.board[0][1] = 'B';
-        initial_state.board[0][5] = 'B';
-        initial_state.board[1][0] = 'B';
-        initial_state.board[2][5] = 'B';
-
-        initial_state.black_pieces_counter = 4;
-        initial_state.white_pieces_counter = 7;
-        initial_state.white_pieces_to_place = 0;
-        initial_state.black_pieces_to_place = 0;
+        System.out.println(initial_state + "\n\n");
 
 
 //        initial_state.board[0][0] = 'W';
@@ -59,32 +61,25 @@ public class Main {
 
 
 
-        ;
-          //Dodatkowo, aby powstał młynek dla czarnych
-//        initial_state.board[1][2] = 'B';
-//        initial_state.black_pieces_to_place++;
-       // System.out.println(initial_state + "\n\n");
-
-        //System.out.println("Initial State:");
-        //System.out.println(initial_state.generateChildren());
+        initial_state.play_pdf();
 
 
 
         //int i = 0;
         //for (GameState t : initial_state.generateChildren()) {
-            //for (GameState t2 : t.generateChildren()) {
-                for (int depth = 1; depth <= 6; depth++) {
-                    //int totalStates = Mill.calculate_states((Mill) t2, 1);
-                    //((Mill) t2).toStr();
-                    int totalStates = Mill.calculate_states(initial_state, depth);
-                    System.out.println("Total states at depth " + depth + ": " + totalStates);
-                    //System.out.println(" | " + totalStates);
-                    //System.out.println();
-                }
-            //}
+        //for (GameState t2 : t.generateChildren()) {
+//        for (int depth = 1; depth <= 6; depth++) {
+//            //int totalStates = Mill.calculate_states((Mill) t2, 1);
+//            //((Mill) t2).toStr();
+//            int totalStates = Mill.calculate_states(initial_state, depth);
+//            System.out.println("Total states at depth " + depth + ": " + totalStates);
+//            //System.out.println(" | " + totalStates);
+//            //System.out.println();
+//        }
+        //}
         //}
 
-        System.exit(0);
+        //System.exit(0);
 
 
         //Testowanie get_neighbours
@@ -100,17 +95,17 @@ public class Main {
 
         //Testowanie get_available_jumps
         //StringBuilder a = new StringBuilder();
-        for (int square = 0; square < 3; square++) {
-            for (int position = 0; position < 8; position++) {
-                System.out.println(square + ", " + position);
-                for (int[] jump : initial_state.get_available_jumps()) {
-                    System.out.println("\t" + jump[0] + ", " + jump[1]);
-                    //a.append(jump[0]);
-                    //a.append(jump[1]);
-                }
-                System.out.println();
-            }
-        }
+//        for (int square = 0; square < 3; square++) {
+//            for (int position = 0; position < 8; position++) {
+//                System.out.println(square + ", " + position);
+//                for (int[] jump : initial_state.get_available_jumps()) {
+//                    System.out.println("\t" + jump[0] + ", " + jump[1]);
+//                    //a.append(jump[0]);
+//                    //a.append(jump[1]);
+//                }
+//                System.out.println();
+//            }
+//        }
 //        //System.out.println(a);
 
 
