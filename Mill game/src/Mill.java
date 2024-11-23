@@ -423,6 +423,24 @@ public class Mill extends GameStateImpl {
         return available_moves;
     }
 
+    public boolean get_available_moves(char player) {
+        for (int square = 0; square < 3; square++) {
+            for (int position = 0; position < 8; position++) {
+                if (board[square][position] == player) {
+                    for (int[] neighbor : get_neighbors(square, position)) {
+                        int neighbor_square = neighbor[0];
+                        int neighbor_position = neighbor[1];
+
+                        if (board[neighbor_square][neighbor_position] == ' ') {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public static int calculate_states(Mill state, int depth) {
         //System.out.println(state);
         if (depth == 0) {
@@ -501,11 +519,10 @@ public class Mill extends GameStateImpl {
 
             int pieces_diff = white_pieces - black_pieces;
 
-            //Dodać brak możliwości ruchu także jako warunek zwycięstwa
-            if (black_pieces <= 2) {
+            if (black_pieces <= 2 || !get_available_moves('B') ) {
                 return Double.POSITIVE_INFINITY;
             }
-            else if (white_pieces <= 2) {
+            else if (white_pieces <= 2 || !get_available_moves('W')) {
                 return Double.NEGATIVE_INFINITY;
             }
 
