@@ -2,21 +2,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import sac.State;
 import sac.StateFunction;
 import sac.game.AlphaBetaPruning;
 import sac.game.GameSearchAlgorithm;
 import sac.game.GameState;
 import sac.game.GameStateImpl;
 
-//ilość stanów dodatkowych gdy jest stworzony młynek to ilość pionków możliwych do zbicia
-//jeżeli wszystkie pozostałe są w młynku to można zbić dowolny
-
-
 public class Mill extends GameStateImpl {
 
     public char [][] board = new char[3][8];
-    public static final char white_player = 'W';
-    public static final char black_player = 'B';
     public int white_pieces_counter = 0;
     public int black_pieces_counter = 0;
     public int white_pieces_to_place = 9;
@@ -501,34 +496,55 @@ public class Mill extends GameStateImpl {
         //System.out.println();
     }
 
+   class heuristic_class extends StateFunction {
+    @Override
+    public double calculate(State state) {
+        Mill mill = (Mill) state;
+        int whitePawns = mill.white_pieces_counter;
+        int blackPawns = mill.black_pieces_counter;
+        int pawnsToPlace = mill.white_pieces_to_place + mill.black_pieces_to_place;
 
-    class heuristic_class extends StateFunction {
-        public double evaluate(Mill state) {
-            int white_pieces = 0;
-            int black_pieces = 0;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 8; j++) {
-                    if (state.board[i][j] == state.white_player) {
-                        white_pieces++;
-                    }
-                    else if (state.board[i][j] == state.black_player) {
-                        black_pieces++;
-                    }
-                }
-            }
+        if (pawnsToPlace <=0) {
 
-            int pieces_diff = white_pieces - black_pieces;
-
-            if (black_pieces <= 2 || !get_available_moves('B') ) {
+            if (blackPawns < 3) {
                 return Double.POSITIVE_INFINITY;
-            }
-            else if (white_pieces <= 2 || !get_available_moves('W')) {
+            } else if (whitePawns < 3) {
                 return Double.NEGATIVE_INFINITY;
             }
-
-            return pieces_diff;
         }
+        return whitePawns - blackPawns;
     }
+}
+
+//    class heuristic_class extends StateFunction {
+//        @Override
+//        public double calculate(State state) {
+//            Mill mill = (Mill) state;
+//            int white_pieces = 0;
+//            int black_pieces = 0;
+//            for (int i = 0; i < 3; i++) {
+//                for (int j = 0; j < 8; j++) {
+//                    if (mill.board[i][j] == mill.white_player) {
+//                        white_pieces++;
+//                    }
+//                    else if (mill.board[i][j] == mill.black_player) {
+//                        black_pieces++;
+//                    }
+//                }
+//            }
+
+//            int pieces_diff = white_pieces - black_pieces;
+//
+//            if (black_pieces <= 2 || !get_available_moves('B') ) {
+//                return Double.POSITIVE_INFINITY;
+//            }
+//            else if (white_pieces <= 2 || !get_available_moves('W')) {
+//                return Double.NEGATIVE_INFINITY;
+//            }
+//
+//            return pieces_diff;
+//        }
+//    }
 
     @Override
     public int hashCode() {
@@ -601,76 +617,77 @@ public class Mill extends GameStateImpl {
             }
         }
     }
-//    public void play() {
-//        Scanner scanner = new Scanner(System.in);
-//        Mill game = new Mill('W');
-//        GameSearchAlgorithm algorithm = new AlphaBetaPruning();
-//        System.out.println("Mill game started! White to move.");
-//
-//        while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
-//            System.out.println(game);
-//
-//            if (game.maximizingTurnNow) {
-//                System.out.println("Enter move: ");
-//                boolean valid_move = false;
-//                while (!valid_move) {
-//                    try {
-//                        int row = scanner.nextInt();
-//                        int col = scanner.nextInt();
-//                        if (game.board[row][col] == ' ') {
-//                            game.place_piece(row, col, 'W');
-//                            valid_move = true;
-//
-//                            if (game.mill_created(row, col, 'W')) {
-//                                game.handle_mill_player(false);
-//                            }
-//
-//                            game.maximizingTurnNow = false;
-//                        }
-//                        else {
-//                            System.out.println("Square occupied. Enter move again:");
-//                        }
-//                    }
-//                    catch (Exception e) {
-//                        System.out.println("Invalid move's format. Enter move again:");
-//                        scanner.nextLine();
-//                    }
-//                }
-//
-//            }
-//            else {
-//                System.out.println("AI's move...");
-//                algorithm.setInitial(game);
-//                algorithm.execute();
-//
-//                String bestMove = algorithm.getFirstBestMove();
-//                boolean valid_move = false;
-//
-//                for (GameState child : game.generateChildren()) {
-//                    if (child.getMoveName().equals(bestMove)) {
-//                        game = (Mill) child;
-//                        valid_move = true;
-//                        break;
-//                    }
-//                }
-//
-//                if (valid_move) {
-//                    System.out.println("AI chose move: " + bestMove);
-//                    game.maximizingTurnNow = true;
-//                }
-//                else {
-//                    System.out.println("AI zły ruch");
-//                    break;
-//                }
-//            }
-//        }
-//
-//        if (game.isWinTerminal()) {
-//            System.out.println("Game ended! : " + (game.maximizingTurnNow ? "White" : "Black") + " won.");
-//        }
-//        else {
-//            System.out.println("Game ended! Draw.");
-//        }
-//    }
+
+    public void play() {
+        Scanner scanner = new Scanner(System.in);
+        Mill game = new Mill('W');
+        GameSearchAlgorithm algorithm = new AlphaBetaPruning();
+        System.out.println("Mill game started! White to move.");
+
+        while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
+            System.out.println(game);
+
+            if (game.maximizingTurnNow) {
+                System.out.println("Enter move: ");
+                boolean valid_move = false;
+                while (!valid_move) {
+                    try {
+                        int row = scanner.nextInt();
+                        int col = scanner.nextInt();
+                        if (game.board[row][col] == ' ') {
+                            game.place_piece(row, col, 'W');
+                            valid_move = true;
+
+                            if (game.mill_created(row, col, 'W')) {
+                                game.handle_mill_player(false);
+                            }
+
+                            game.maximizingTurnNow = false;
+                        }
+                        else {
+                            System.out.println("Square occupied. Enter move again:");
+                        }
+                    }
+                    catch (Exception e) {
+                        System.out.println("Invalid move's format. Enter move again:");
+                        scanner.nextLine();
+                    }
+                }
+
+            }
+            else {
+                System.out.println("AI's move...");
+                algorithm.setInitial(game);
+                algorithm.execute();
+
+                String bestMove = algorithm.getFirstBestMove();
+                boolean valid_move = false;
+
+                for (GameState child : game.generateChildren()) {
+                    if (child.getMoveName().equals(bestMove)) {
+                        game = (Mill) child;
+                        valid_move = true;
+                        break;
+                    }
+                }
+
+                if (valid_move) {
+                    System.out.println("AI chose move: " + bestMove);
+                    game.maximizingTurnNow = true;
+                }
+                else {
+                    System.out.println("AI zły ruch");
+                    break;
+                }
+            }
+        }
+
+        if (game.isWinTerminal()) {
+            System.out.println("Game ended! : " + (game.maximizingTurnNow ? "White" : "Black") + " won.");
+        }
+        else {
+            System.out.println("Game ended! Draw.");
+        }
+    }
 
 }

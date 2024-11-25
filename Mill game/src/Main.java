@@ -1,11 +1,18 @@
+import sac.game.AlphaBetaPruning;
+import sac.game.GameSearchConfigurator;
 import sac.game.GameState;
+
 
 public class Main {
     public static void main(String[] args) {
 
         Mill initial_state = new Mill('B');
+        initial_state.setH(new heuristic_class());
+
+
 
 //        int white_pieces_counter = 4;
+        //
 //        int black_pieces_counter = 4;
 //        boolean is_jumping_phase = (white_pieces_counter <= 3 || black_pieces_counter <= 3);
 //        System.out.println(is_jumping_phase);
@@ -61,7 +68,7 @@ public class Main {
 
 
 
-        initial_state.play_pdf();
+        initial_state.play();
 
 
 
