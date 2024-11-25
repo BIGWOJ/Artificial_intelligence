@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
 import sac.State;
 import sac.StateFunction;
 import sac.game.AlphaBetaPruning;
@@ -9,8 +8,9 @@ import sac.game.GameSearchAlgorithm;
 import sac.game.GameState;
 import sac.game.GameStateImpl;
 
-public class Mill extends GameStateImpl {
+import static java.lang.System.exit;
 
+public class Mill extends GameStateImpl {
     public char [][] board = new char[3][8];
     public int white_pieces_counter = 0;
     public int black_pieces_counter = 0;
@@ -57,12 +57,21 @@ public class Mill extends GameStateImpl {
                 col = scanner.nextInt();
 
             }while (board[row][col] != ' ');
-            //System.out.println("asd");
+
             board[row][col] = player;
 
         }
         else{
             board[row][col] = player;
+        }
+
+        if(player == 'W') {
+            white_pieces_to_place--;
+            white_pieces_counter++;
+        }
+        else {
+            black_pieces_to_place--;
+            black_pieces_counter++;
         }
     }
 
@@ -396,12 +405,6 @@ public class Mill extends GameStateImpl {
             if (square < 2) neighbors.add(new int[]{square + 1, position});
         }
 
-//        System.out.println("Neighbors for [" + square + ", " + position + "] " + board[square][position]);
-//        for (int[] neighbor : neighbors) {
-//            System.out.println("\tNeighbor: [" + neighbor[0] + ", " + neighbor[1] + "] " + board[neighbor[0]][neighbor[1]]);
-//        }
-//        System.out.println("\n\n");
-
         return neighbors;
     }
 
@@ -437,9 +440,7 @@ public class Mill extends GameStateImpl {
     }
 
     public static int calculate_states(Mill state, int depth) {
-        //System.out.println(state);
         if (depth == 0) {
-            //state.toStr();
             return 1;
         }
 
@@ -453,8 +454,6 @@ public class Mill extends GameStateImpl {
         }
 
         return total_states;
-
-
     }
 
     //Copy constructor while creating children
@@ -473,79 +472,6 @@ public class Mill extends GameStateImpl {
         }
     }
 
-    public void toStr() {
-        for (int i = 0; i <3; i++) {
-            for(int j = 0; j < 8; j++) {
-                if(board[i][j] == 'W') {
-                    System.out.print(i*8+j + " ");
-                }
-
-            }
-        }
-        System.out.print("|");
-
-        for (int i = 0; i <3; i++) {
-            for(int j = 0; j < 8; j++) {
-                if(board[i][j] == 'B') {
-                    System.out.print(" " + (i*8+j));
-                }
-
-            }
-        }
-
-        //System.out.println();
-    }
-
-   class heuristic_class extends StateFunction {
-    @Override
-    public double calculate(State state) {
-        Mill mill = (Mill) state;
-        int whitePawns = mill.white_pieces_counter;
-        int blackPawns = mill.black_pieces_counter;
-        int pawnsToPlace = mill.white_pieces_to_place + mill.black_pieces_to_place;
-
-        if (pawnsToPlace <=0) {
-
-            if (blackPawns < 3) {
-                return Double.POSITIVE_INFINITY;
-            } else if (whitePawns < 3) {
-                return Double.NEGATIVE_INFINITY;
-            }
-        }
-        return whitePawns - blackPawns;
-    }
-}
-
-//    class heuristic_class extends StateFunction {
-//        @Override
-//        public double calculate(State state) {
-//            Mill mill = (Mill) state;
-//            int white_pieces = 0;
-//            int black_pieces = 0;
-//            for (int i = 0; i < 3; i++) {
-//                for (int j = 0; j < 8; j++) {
-//                    if (mill.board[i][j] == mill.white_player) {
-//                        white_pieces++;
-//                    }
-//                    else if (mill.board[i][j] == mill.black_player) {
-//                        black_pieces++;
-//                    }
-//                }
-//            }
-
-//            int pieces_diff = white_pieces - black_pieces;
-//
-//            if (black_pieces <= 2 || !get_available_moves('B') ) {
-//                return Double.POSITIVE_INFINITY;
-//            }
-//            else if (white_pieces <= 2 || !get_available_moves('W')) {
-//                return Double.NEGATIVE_INFINITY;
-//            }
-//
-//            return pieces_diff;
-//        }
-//    }
-
     @Override
     public int hashCode() {
         StringBuilder board = new StringBuilder();
@@ -556,8 +482,6 @@ public class Mill extends GameStateImpl {
         }
         return board.hashCode();
     }
-
-    //PLAY
 
     public void play_pdf() {
         Mill game = new Mill('W');
@@ -622,13 +546,20 @@ public class Mill extends GameStateImpl {
         Scanner scanner = new Scanner(System.in);
         Mill game = new Mill('W');
         GameSearchAlgorithm algorithm = new AlphaBetaPruning();
-        System.out.println("Mill game started! White to move.");
+        System.out.println("===============Mill game started! White to move.===============");
 
         while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
             System.out.println(game);
 
+            if (game.white_pieces_to_place == 0 && game.black_pieces_to_place == 0) {
+                System.out.println("Druga faza");
+                exit(0);
+            }
+            //System.out.println(game.white_pieces_to_place + " " + game.black_pieces_to_place);
+            //System.out.println(game.white_pieces_counter + " " + game.black_pieces_counter);
+
             if (game.maximizingTurnNow) {
-                System.out.println("Enter move: ");
+                System.out.println("===============Enter move:===============");
                 boolean valid_move = false;
                 while (!valid_move) {
                     try {
@@ -645,18 +576,19 @@ public class Mill extends GameStateImpl {
                             game.maximizingTurnNow = false;
                         }
                         else {
-                            System.out.println("Square occupied. Enter move again:");
+                            System.out.println("===============Square occupied. Enter move again:===============");
                         }
                     }
                     catch (Exception e) {
-                        System.out.println("Invalid move's format. Enter move again:");
+                        System.out.println("===============Invalid move's format. Enter move again:===============");
                         scanner.nextLine();
                     }
                 }
 
             }
+
             else {
-                System.out.println("AI's move...");
+                System.out.println("===============AI's move...===============\n");
                 algorithm.setInitial(game);
                 algorithm.execute();
 
@@ -672,22 +604,33 @@ public class Mill extends GameStateImpl {
                 }
 
                 if (valid_move) {
-                    System.out.println("AI chose move: " + bestMove);
+                    System.out.println("===============AI's move: " + bestMove + "===============");
                     game.maximizingTurnNow = true;
-                }
-                else {
-                    System.out.println("AI zły ruch");
-                    break;
                 }
             }
         }
 
         if (game.isWinTerminal()) {
-            System.out.println("Game ended! : " + (game.maximizingTurnNow ? "White" : "Black") + " won.");
+            System.out.println("===============Game ended! : " + (game.maximizingTurnNow ? "White" : "Black") + " won.===============");
         }
         else {
-            System.out.println("Game ended! Draw.");
+            System.out.println("===============Game ended! Draw.===============");
         }
     }
+}
 
+   class heuristic_class extends StateFunction {
+    @Override
+    public double calculate(State state) {
+        Mill mill = (Mill) state;
+        if (mill.white_pieces_to_place + mill.black_pieces_to_place == 0) {
+            if (mill.black_pieces_counter <= 2 || !mill.get_available_moves('B')) {
+                return Double.POSITIVE_INFINITY;
+            }
+            else if (mill.white_pieces_counter <= 2 || !mill.get_available_moves('W')) {
+                return Double.NEGATIVE_INFINITY;
+            }
+        }
+        return mill.white_pieces_counter - mill.black_pieces_counter;
+    }
 }
