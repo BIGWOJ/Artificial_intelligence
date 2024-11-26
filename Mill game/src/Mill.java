@@ -91,37 +91,30 @@ public class Mill extends GameStateImpl {
                 System.out.println("Position already occupied. Place piece elsewhere.");
                 new_row = invalid_move()[0];
                 new_col = invalid_move()[1];
-
             }
             while (board[new_row][new_col] != ' ');
 
-            if ((col % 2 == 0 &&
-                    !(new_col == (col + 1) % 8 || new_col == (col - 1) % 8))) {
+            if ((col % 2 == 0) &&
+                    !(new_col == (col + 1) % 8 || new_col == (col + 7) % 8)) {
                 {
                     do {
                         System.out.println("Invalid move. Place piece elsewhere.");
                         new_row = invalid_move()[0];
                         new_col = invalid_move()[1];
 
-                    }while ((new_col != (new_col + 1) % 8) || (new_col != (new_col - 1) % 8) || (new_row != (new_row + 1) % 3) || (new_row != (new_row - 1) % 3));
-
+                    } while ((new_col != (new_col + 1) % 8) || (new_col != (new_col - 1) % 8) || (new_row != (new_row + 1) % 3) || (new_row != (new_row - 1) % 3));
                 }
-
             }
-
             else if ((col % 2 == 0) && (new_row != row)) {
                 do {
                     System.out.println("Invalid move. Place piece elsewhere.");
                     new_row = invalid_move()[0];
                     new_col = invalid_move()[1];
-                }while (new_row != row);
-
+                } while (new_row != row);
             }
-
-            board[new_row][new_col] = player;
-            board[row][col] = ' ';
-
         }
+        board[new_row][new_col] = player;
+        board[row][col] = ' ';
     }
 
     public boolean mill_created(int row, int col, char player) {
@@ -222,34 +215,21 @@ public class Mill extends GameStateImpl {
         return mill_children;
     }
 
-    public void handle_mill_player(boolean test) {
+    public void handle_mill_player() {
         boolean piece_removed = false;
         Scanner scanner = new Scanner(System.in);
         while (!piece_removed) {
-            int row = 0;
-            int col = 0;
-            if (!test) {
-                System.out.println("Mill created! Remove an opponent's piece: ");
-                row = scanner.nextInt();
-                col = scanner.nextInt();
-            }
-            else {
-                outer_loop:
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 8; j++) {
-                        if (board[i][j] == (maximizingTurnNow ? 'B' : 'W')) {
-                            row = i;
-                            col = j;
-                            break outer_loop;
-                        }
-                    }
-                }
-            }
+            int row, col;
+
+            System.out.println("Mill created! Remove an opponent's piece: ");
+            row = scanner.nextInt();
+            col = scanner.nextInt();
 
             if (board[row][col] == (maximizingTurnNow ? 'B' : 'W')) {
                 if (maximizingTurnNow) {
                     black_pieces_counter--;
-                } else {
+                }
+                else {
                     white_pieces_counter--;
                 }
 
@@ -257,9 +237,7 @@ public class Mill extends GameStateImpl {
                 piece_removed = true;
             }
             else {
-                if (!test) {
-                    System.out.println("Invalid piece. Try again.");
-                }
+                System.out.println("Invalid piece. Try again.");
             }
         }
     }
@@ -271,8 +249,6 @@ public class Mill extends GameStateImpl {
         boolean is_placement_phase = (white_pieces_to_place > 0 || black_pieces_to_place > 0);
         boolean is_moving_phase = (white_pieces_to_place == 0 && black_pieces_to_place == 0);
         boolean is_jumping_phase = (maximizingTurnNow && white_pieces_counter == 3 || !maximizingTurnNow && black_pieces_counter == 3) && is_moving_phase;
-
-
 
         //Placement phase
         if (is_placement_phase) {
@@ -550,18 +526,18 @@ public class Mill extends GameStateImpl {
 
         while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
             System.out.println(game);
+            boolean is_placement_phase = (game.white_pieces_to_place > 0 || game.black_pieces_to_place > 0);
+            boolean is_moving_phase = (game.white_pieces_to_place == 0 && game.black_pieces_to_place == 0);
+            boolean is_jumping_phase = (game.maximizingTurnNow && game.white_pieces_counter == 3 || !game.maximizingTurnNow && game.black_pieces_counter == 3) && is_moving_phase;
 
-            if (game.white_pieces_to_place == 0 && game.black_pieces_to_place == 0) {
-                System.out.println("Druga faza");
-                exit(0);
-            }
-            //System.out.println(game.white_pieces_to_place + " " + game.black_pieces_to_place);
-            //System.out.println(game.white_pieces_counter + " " + game.black_pieces_counter);
+            System.out.println("To place: " + game.white_pieces_to_place + " " + game.black_pieces_to_place);
+            System.out.println("Counter: " + game.white_pieces_counter + " " + game.black_pieces_counter);
 
             if (game.maximizingTurnNow) {
                 System.out.println("===============Enter move:===============");
                 boolean valid_move = false;
-                while (!valid_move) {
+                //Placement phase
+                while (!valid_move && is_placement_phase) {
                     try {
                         int row = scanner.nextInt();
                         int col = scanner.nextInt();
@@ -570,7 +546,7 @@ public class Mill extends GameStateImpl {
                             valid_move = true;
 
                             if (game.mill_created(row, col, 'W')) {
-                                game.handle_mill_player(false);
+                                game.handle_mill_player();
                             }
 
                             game.maximizingTurnNow = false;
@@ -582,6 +558,91 @@ public class Mill extends GameStateImpl {
                     catch (Exception e) {
                         System.out.println("===============Invalid move's format. Enter move again:===============");
                         scanner.nextLine();
+                    }
+                }
+
+                //Moving phase
+                if (!is_jumping_phase) {
+                    while (!valid_move && !is_placement_phase) {
+                        try {
+                            System.out.println("Move from row: ");
+                            int row = scanner.nextInt();
+                            System.out.println("Move from column: ");
+                            int col = scanner.nextInt();
+                            System.out.println("Move to row: ");
+                            int new_row = scanner.nextInt();
+                            System.out.println("Move to column: ");
+                            int new_col = scanner.nextInt();
+
+                            if (game.board[row][col] == 'W' && game.board[new_row][new_col] == ' ') {
+                                int current_square = row;
+                                int current_position = col;
+                                int target_square = new_row;
+                                int target_position = new_col;
+
+                                boolean is_neighbor = false;
+                                for (int[] neighbor : game.get_neighbors(current_square, current_position)) {
+                                    if (neighbor[0] == target_square && neighbor[1] == target_position) {
+                                        is_neighbor = true;
+                                        break;
+                                    }
+                                }
+
+                                if (is_neighbor) {
+                                    game.move_piece(row, col, new_row, new_col, 'W');
+                                    valid_move = true;
+                                    if (game.mill_created(new_row, new_col, 'W')) {
+                                        game.handle_mill_player();
+                                    }
+                                    game.maximizingTurnNow = false;
+                                }
+                                else {
+                                    System.out.println("Invalid move: target is not a neighbor.");
+                                }
+
+                            }
+                            else {
+                                System.out.println("===============Invalid move. Enter move again:===============");
+                            }
+                        }
+                        catch (Exception e) {
+                            System.out.println("===============Invalid move's format. Enter move again:===============");
+                            scanner.nextLine();
+                        }
+                    }
+                }
+
+                //Jumping phase
+                else {
+                    while (!valid_move && is_jumping_phase) {
+                        try {
+                            System.out.println("Jump from row: ");
+                            int row = scanner.nextInt();
+                            System.out.println("Jump from column: ");
+                            int col = scanner.nextInt();
+                            System.out.println("Jump to row: ");
+                            int new_row = scanner.nextInt();
+                            System.out.println("Jump to column: ");
+                            int new_col = scanner.nextInt();
+
+                            if (game.board[new_row][new_col] == ' ') {
+                                game.move_piece(row, col, new_row, new_col, 'W');
+                                valid_move = true;
+
+                                if (game.mill_created(new_row, new_col, 'W')) {
+                                    game.handle_mill_player();
+                                }
+
+                                game.maximizingTurnNow = false;
+                            }
+                            else {
+                                System.out.println("===============Invalid move. Enter move again:===============");
+                            }
+                        }
+                        catch (Exception e) {
+                            System.out.println("===============Invalid move's format. Enter move again:===============");
+                            scanner.nextLine();
+                        }
                     }
                 }
 
