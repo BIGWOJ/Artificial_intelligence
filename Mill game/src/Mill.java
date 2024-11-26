@@ -516,12 +516,181 @@ public class Mill extends GameStateImpl {
         }
     }
 
+    public void play_ai() {
+        Scanner scanner = new Scanner(System.in);
+        Mill game = new Mill('W');
+        GameSearchAlgorithm algorithm = new AlphaBetaPruning();
+        System.out.println("===============Mill game started! White to move.===============");
+        int move_counter = 1;
+
+        while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
+            System.out.println("===============Move #" + move_counter++ + " ===============\n" + game);
+            boolean is_placement_phase = (game.white_pieces_to_place > 0 || game.black_pieces_to_place > 0);
+            boolean is_moving_phase = (game.white_pieces_to_place == 0 && game.black_pieces_to_place == 0);
+            boolean is_jumping_phase = (game.maximizingTurnNow && game.white_pieces_counter == 3 || !game.maximizingTurnNow && game.black_pieces_counter == 3) && is_moving_phase;
+
+            System.out.println("To place: " + game.white_pieces_to_place + " " + game.black_pieces_to_place);
+            System.out.println("Counter: " + game.white_pieces_counter + " " + game.black_pieces_counter);
+
+            //Human move
+            if (game.maximizingTurnNow) {
+
+                System.out.println("===============AI's move...===============\n");
+                algorithm.setInitial(game);
+                algorithm.execute();
+
+                String bestMove = algorithm.getFirstBestMove();
+                boolean valid_move = false;
+
+                for (GameState child : game.generateChildren()) {
+                    if (child.getMoveName().equals(bestMove)) {
+                        game = (Mill) child;
+                        valid_move = true;
+                        break;
+                    }
+                }
+
+                if (valid_move) {
+                    System.out.println("===============AI's move: " + bestMove + "===============\n");
+                    game.maximizingTurnNow = false;
+                }
+            }
+
+            //AI move
+            else {
+
+
+                System.out.println("===============Enter move:===============");
+                boolean valid_move = false;
+                //Placement phase
+                while (!valid_move && is_placement_phase) {
+                    try {
+                        int row = scanner.nextInt();
+                        int col = scanner.nextInt();
+                        if (game.board[row][col] == ' ') {
+                            game.place_piece(row, col, 'B');
+                            valid_move = true;
+
+                            if (game.mill_created(row, col, 'B')) {
+                                game.handle_mill_player();
+                            }
+
+                            game.maximizingTurnNow = true;
+                        }
+                        else {
+                            System.out.println("===============Square occupied. Enter move again:===============");
+                        }
+                    }
+                    catch (Exception e) {
+                        System.out.println("===============Invalid move's format. Enter move again:===============");
+                        scanner.nextLine();
+                    }
+                }
+
+                //Moving phase
+                if (!is_jumping_phase) {
+                    while (!valid_move && !is_placement_phase) {
+                        try {
+                            System.out.println("Move from row: ");
+                            int row = scanner.nextInt();
+                            System.out.println("Move from column: ");
+                            int col = scanner.nextInt();
+                            System.out.println("Move to row: ");
+                            int new_row = scanner.nextInt();
+                            System.out.println("Move to column: ");
+                            int new_col = scanner.nextInt();
+
+                            if (game.board[row][col] == 'B' && game.board[new_row][new_col] == ' ') {
+                                int current_square = row;
+                                int current_position = col;
+                                int target_square = new_row;
+                                int target_position = new_col;
+
+                                boolean is_neighbor = false;
+                                for (int[] neighbor : game.get_neighbors(current_square, current_position)) {
+                                    if (neighbor[0] == target_square && neighbor[1] == target_position) {
+                                        is_neighbor = true;
+                                        break;
+                                    }
+                                }
+
+                                if (is_neighbor) {
+                                    game.move_piece(row, col, new_row, new_col, 'B');
+                                    valid_move = true;
+                                    if (game.mill_created(new_row, new_col, 'B')) {
+                                        game.handle_mill_player();
+                                    }
+                                    game.maximizingTurnNow = false;
+                                }
+                                else {
+                                    System.out.println("Invalid move: target is not a neighbor.");
+                                }
+
+                            }
+                            else {
+                                System.out.println("===============Invalid move. Enter move again:===============");
+                            }
+                        }
+                        catch (Exception e) {
+                            System.out.println("===============Invalid move's format. Enter move again:===============");
+                            scanner.nextLine();
+                        }
+                    }
+                }
+
+                //Jumping phase
+                else {
+                    while (!valid_move && is_jumping_phase) {
+                        try {
+                            System.out.println("Jump from row: ");
+                            int row = scanner.nextInt();
+                            System.out.println("Jump from column: ");
+                            int col = scanner.nextInt();
+                            System.out.println("Jump to row: ");
+                            int new_row = scanner.nextInt();
+                            System.out.println("Jump to column: ");
+                            int new_col = scanner.nextInt();
+
+                            if (game.board[new_row][new_col] == ' ') {
+                                game.move_piece(row, col, new_row, new_col, 'B');
+                                valid_move = true;
+
+                                if (game.mill_created(new_row, new_col, 'B')) {
+                                    game.handle_mill_player();
+                                }
+
+                                game.maximizingTurnNow = true;
+                            }
+                            else {
+                                System.out.println("===============Invalid move. Enter move again:===============");
+                            }
+                        }
+                        catch (Exception e) {
+                            System.out.println("===============Invalid move's format. Enter move again:===============");
+                            scanner.nextLine();
+                        }
+                    }
+                }
+
+            }
+
+
+        }
+
+        if (game.isWinTerminal()) {
+            System.out.println("===============Game ended! : " + (game.maximizingTurnNow ? "Black" : "White") + " won.===============");
+        }
+        else {
+            System.out.println("===============Game ended! Draw.===============");
+        }
+    }
+
     public void play() {
         Scanner scanner = new Scanner(System.in);
         Mill game = new Mill('W');
         GameSearchAlgorithm algorithm = new AlphaBetaPruning();
         System.out.println("===============Mill game started! White to move.===============");
-        int move_counter = 0;
+        int move_counter = 1;
 
         while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
             System.out.println("===============Move #" + move_counter++ + " ===============\n" + game);

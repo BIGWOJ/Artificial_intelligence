@@ -35,6 +35,7 @@ public class Test {
             int totalStates = Mill.calculate_states(initial_state, depth);
             System.out.println("Total states at depth " + depth + ": " + totalStates);
         }
+        System.out.println();
     }
 
     public static void play() {
