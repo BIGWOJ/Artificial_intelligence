@@ -8,8 +8,6 @@ import sac.game.GameSearchAlgorithm;
 import sac.game.GameState;
 import sac.game.GameStateImpl;
 
-import static java.lang.System.exit;
-
 public class Mill extends GameStateImpl {
     public char [][] board = new char[3][8];
     public int white_pieces_counter = 0;
@@ -432,7 +430,7 @@ public class Mill extends GameStateImpl {
         return total_states;
     }
 
-    //Copy constructor while creating children
+    //Copy constructor using during creating children
     public Mill(Mill state) {
         this.board = new char[3][8];
         this.white_pieces_counter = state.white_pieces_counter;
@@ -523,9 +521,10 @@ public class Mill extends GameStateImpl {
         Mill game = new Mill('W');
         GameSearchAlgorithm algorithm = new AlphaBetaPruning();
         System.out.println("===============Mill game started! White to move.===============");
+        int move_counter = 0;
 
         while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
-            System.out.println(game);
+            System.out.println("===============Move #" + move_counter++ + " ===============\n" + game);
             boolean is_placement_phase = (game.white_pieces_to_place > 0 || game.black_pieces_to_place > 0);
             boolean is_moving_phase = (game.white_pieces_to_place == 0 && game.black_pieces_to_place == 0);
             boolean is_jumping_phase = (game.maximizingTurnNow && game.white_pieces_counter == 3 || !game.maximizingTurnNow && game.black_pieces_counter == 3) && is_moving_phase;
@@ -533,6 +532,7 @@ public class Mill extends GameStateImpl {
             System.out.println("To place: " + game.white_pieces_to_place + " " + game.black_pieces_to_place);
             System.out.println("Counter: " + game.white_pieces_counter + " " + game.black_pieces_counter);
 
+            //Human move
             if (game.maximizingTurnNow) {
                 System.out.println("===============Enter move:===============");
                 boolean valid_move = false;
@@ -648,6 +648,7 @@ public class Mill extends GameStateImpl {
 
             }
 
+            //AI move
             else {
                 System.out.println("===============AI's move...===============\n");
                 algorithm.setInitial(game);
@@ -665,14 +666,14 @@ public class Mill extends GameStateImpl {
                 }
 
                 if (valid_move) {
-                    System.out.println("===============AI's move: " + bestMove + "===============");
+                    System.out.println("===============AI's move: " + bestMove + "===============\n");
                     game.maximizingTurnNow = true;
                 }
             }
         }
 
         if (game.isWinTerminal()) {
-            System.out.println("===============Game ended! : " + (game.maximizingTurnNow ? "White" : "Black") + " won.===============");
+            System.out.println("===============Game ended! : " + (game.maximizingTurnNow ? "Black" : "White") + " won.===============");
         }
         else {
             System.out.println("===============Game ended! Draw.===============");
@@ -680,7 +681,7 @@ public class Mill extends GameStateImpl {
     }
 }
 
-   class heuristic_class extends StateFunction {
+class heuristic_class extends StateFunction {
     @Override
     public double calculate(State state) {
         Mill mill = (Mill) state;
