@@ -1,4 +1,4 @@
-import NBC
+from NBC_class import NBC_class
 import numpy as np
 from sklearn.model_selection import train_test_split
 
@@ -26,6 +26,10 @@ def create_contingency_table(data):
     data = data[:, 1:]
     contingency_table = {}
 
+    unique = np.unique(data[:, -1])
+    print(unique)
+    #exit(0)
+
     for variable in variables:
         contingency_table[variable] = {}
         for value in variables[variable]:
@@ -41,7 +45,7 @@ def create_contingency_table(data):
                 count = np.sum((data[:, variable_index] == value_code) & (data[:, -1] == lens_index))
                 # print(f"{value} {lens} {count}")
                 contingency_table[variable][value][lens] = int(count)
-
+    print(contingency_table)
     return contingency_table
 
 def print_contingency_table(contingency_table):
@@ -76,9 +80,22 @@ def wine():
         print(i, end='\n\n')
 
 def lenses():
-    lenses_data = np.genfromtxt('lenses.data')
-    contingency_table = create_contingency_table(lenses_data)
-    print_contingency_table(contingency_table)
+    lenses_data = np.genfromtxt('lenses.data', dtype=int)
+    #contingency_table = create_contingency_table(lenses_data)
+    #print_contingency_table(contingency_table)
+
+    X = lenses_data[:, 1:-1]
+    y = lenses_data[:, -1]
+
+
+    NBC = NBC_class(2)
+    NBC.fit(X, y)
+    NBC.predict_proba(X)
+    #NBC_class.print_contingency_table()
+
+
+
+
 
 #wine()
 lenses()
