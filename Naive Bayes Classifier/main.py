@@ -64,7 +64,6 @@ def print_contingency_table(contingency_table):
 
 def wine():
     wine_data = np.genfromtxt('wine.data', delimiter=',')
-    class_labels = wine_data[:, 0]
     X = wine_data[:, 1:]
     y = wine_data[:, 0]
     #X_train, X_test, y_train, y_test = train_test_split(features, class_labels)
@@ -73,12 +72,22 @@ def wine():
     #first_feature = wine_data[:, feature]
 
     discretized_wine_data = []
+
     for feature in range(X.shape[1]):
         data = X[:, feature]
-        discretized_wine_data.append(discretize(data, 3, np.min(data), np.max(data)))
+        discretized_wine_data.append(discretize(data, 10, np.min(data), np.max(data)))
 
-    for i in discretized_wine_data:
-        print(i, end='\n\n')
+    discretized_wine_data = np.array(discretized_wine_data).T
+    y = discretize(y, 10, np.min(y), np.max(y))
+
+    NBC = NBC_class.NBC()
+    NBC.fit(discretized_wine_data, y)
+    NBC.predict_proba(discretized_wine_data)
+    print(NBC.predict(discretized_wine_data))
+    print(y)
+
+    print(count := accuracy_score(y, NBC.predict(discretized_wine_data)))
+    print(count)
 
 def lenses():
     lenses_data = np.genfromtxt('lenses.data', dtype=int)
@@ -88,27 +97,27 @@ def lenses():
     X = lenses_data[:, 1:-1]
     y = lenses_data[:, -1]
 
-
     #NBC = NBC_class.NBC(2)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-    NBC = NBC_class.NBC(laplace=True)  # Włącz poprawkę Laplace'a
-    NBC.fit(X_train, y_train)
+    mean_accuracy = 0
+    tests_number = 100
+    for _ in range(100):
+        X_train, X_test, y_train, y_test = train_test_split(X, y)
+        NBC = NBC_class.NBC()
+        NBC.fit(X_train, y_train)
+        y_pred = NBC.predict(X_test) + 1
+        mean_accuracy += accuracy_score(y_test, y_pred)
 
-    # Predykcja na zbiorze testowym
-    y_pred_test = NBC.predict(X_test)
-    y_pred_train = NBC.predict(X_train)
-
-    train_accuracy = accuracy_score(y_train, y_pred_train)
-
-    # Skuteczność na zbiorze testowym
-    test_accuracy = accuracy_score(y_test, y_pred_test)
-
-    print(f"Train Accuracy: {train_accuracy:.2f}")
-    print(f"Test Accuracy: {test_accuracy:.2f}")
-    #NBC_class.print_contingency_table()
+    print(f'Predictions accuracy: {mean_accuracy/tests_number:.3f}')
 
 
-
+    mean_accuracy = 0
+    # for _ in range(100):
+    #     X_train, X_test, y_train, y_test = train_test_split(X, y)
+    #     NBC = NBC_class.NBC(laplace=True)
+    #     NBC.fit(X, y)
+    #     y_pred = NBC.predict(X) + 1
+    #     mean_accuracy += accuracy_score(y_test, y_pred)
+    # print(f'Predictions with Laplace accuracy: {mean_accuracy/tests_number:.3f}')
 
 
 #wine()

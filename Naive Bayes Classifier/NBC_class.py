@@ -4,11 +4,11 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 class NBC(BaseEstimator, ClassifierMixin):
     def __init__(self, laplace=False):
         self.laplace = laplace
-        self.contingency_tables = None
+        self.contingency_table = None
 
     def print_contingency_table(self, short=False):
         if short:
-            for table in self.contingency_tables:
+            for table in self.contingency_table:
                 print(table)
 
         for variable_index, values in enumerate(self.contingency_table):
@@ -20,41 +20,73 @@ class NBC(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         unique, counts = np.unique(y, return_counts=True)
-        self.unique_labels = unique
-        self.unique_counts = counts
-        self.unique_prob = counts / sum(counts)
+        self.classes = unique
+        self.classes_counts = counts
+        self.classes_probabilities = counts / sum(counts)
 
         contingency_table = []
-        self.unique_columns = []
+        self.attributes_possibilities = []
 
         for column in range(X.shape[1]):
-            self.unique_columns.append(np.unique(X[:, column]))
-            contingency_table.append(np.zeros((len(self.unique_columns[-1]), len(self.unique_labels))))
+            self.attributes_possibilities.append(np.unique(X[:, column]))
+            contingency_table.append(np.zeros((len(self.attributes_possibilities[-1]), len(self.classes))))
 
-        for variable_index in range(len(self.unique_columns)):
-            for value_code in self.unique_columns[variable_index]:
-                for lens_index in self.unique_labels:
+        self.attributes_probabilities = []
+        for variable_index in range(len(self.attributes_possibilities)):
+            attribute_probabilities = []
+            for value_code in self.attributes_possibilities[variable_index]:
+                value_probabilities = []
+                for lens_index in self.classes:
+                    lens_index = int(lens_index)
+                    count = np.sum((X[:, variable_index] == value_code) & (y == lens_index))
+                    contingency_table[variable_index][value_code-1][lens_index-1] = int(count)
+                    value_probabilities.append(count / self.classes_counts[lens_index-1])
+
+                    if self.laplace:
+                        count += 1
+                        denominator = self.classes_counts[lens_index - 1] + len(
+                            self.attributes_possibilities[variable_index])
+                    else:
+                        denominator = self.classes_counts[lens_index - 1]
+                    probability = count / denominator
+
+                attribute_probabilities.append(value_probabilities)
+            self.attributes_probabilities.append(attribute_probabilities)
+
+        #print(self.attributes_possibilities)
+        #print(self.attributes_probabilities)
+        #print(self.classes_probabilities)
+        #exit(0)
+
+        for variable_index in range(len(self.attributes_possibilities)):
+            for value_code in self.attributes_possibilities[variable_index]:
+                for lens_index in self.classes:
                     count = np.sum((X[:, variable_index] == value_code) & (y == lens_index))
                     contingency_table[variable_index][value_code-1][lens_index-1] = int(count)
 
         self.contingency_table = contingency_table
+        #print(self.attributes_possibilities)
+
+
+
         #self.print_contingency_table(short=True)
+        #print(self.classes_counts)
+        #print(self.classes_probabilities)
+        #print(self.attributes_possibilities)
+        #exit(0)
         return contingency_table
 
     def predict_proba(self, X):
-        prob_matrix = np.zeros((X.shape[0], len(self.classes)))
+        probabilities = np.ones((X.shape[0], len(self.classes)))
 
-        for sample_index, sample in enumerate(X):
-            for class_index in range(len(self.classes)):
-                prob = self.class_probs[class_index]
-                for attr_idx, attr_value in enumerate(sample):
-                    attr_value_idx = np.where(self.attributes[attr_idx] == attr_value)[0][0]
-                    prob *= self.contingency_tables[attr_idx][attr_value_idx, class_index]
-                prob_matrix[sample_index, class_index] = prob
+        for i in range(X.shape[0]):
+            for y_index in range(len(self.classes)):
+                probabilities[i, y_index] *= self.classes_probabilities[y_index]
+                for j in range(X.shape[1]):
+                    probabilities[i, y_index] *= self.attributes_probabilities[j][X[i, j] - 1][y_index]
 
-        prob_matrix /= prob_matrix.sum(axis=1, keepdims=True)
-        return prob_matrix
+        #print(probabilities)
+        return probabilities
 
     def predict(self, X):
-        prob_matrix = self.predict_proba(X)
-        return np.argmax(prob_matrix, axis=1)
+        return np.argmax(self.predict_proba(X), axis=1)
