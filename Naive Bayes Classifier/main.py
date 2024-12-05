@@ -1,6 +1,7 @@
-from NBC_class import NBC_class
+import NBC_class
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 def discretize(data, num_bins, min, max):
     bin_size = (max - min) / num_bins
@@ -88,9 +89,22 @@ def lenses():
     y = lenses_data[:, -1]
 
 
-    NBC = NBC_class(2)
-    NBC.fit(X, y)
-    NBC.predict_proba(X)
+    #NBC = NBC_class.NBC(2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    NBC = NBC_class.NBC(laplace=True)  # Włącz poprawkę Laplace'a
+    NBC.fit(X_train, y_train)
+
+    # Predykcja na zbiorze testowym
+    y_pred_test = NBC.predict(X_test)
+    y_pred_train = NBC.predict(X_train)
+
+    train_accuracy = accuracy_score(y_train, y_pred_train)
+
+    # Skuteczność na zbiorze testowym
+    test_accuracy = accuracy_score(y_test, y_pred_test)
+
+    print(f"Train Accuracy: {train_accuracy:.2f}")
+    print(f"Test Accuracy: {test_accuracy:.2f}")
     #NBC_class.print_contingency_table()
 
 

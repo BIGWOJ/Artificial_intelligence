@@ -1,9 +1,22 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
-class NBC_class(BaseEstimator, ClassifierMixin):
-    def __init__(self, num_bins):
-        self.num_bins = num_bins
-        self.contingency_table = None
+
+class NBC(BaseEstimator, ClassifierMixin):
+    def __init__(self, laplace=False):
+        self.laplace = laplace
+        self.contingency_tables = None
+
+    def print_contingency_table(self, short=False):
+        if short:
+            for table in self.contingency_tables:
+                print(table)
+
+        for variable_index, values in enumerate(self.contingency_table):
+            print(f"Variable: {variable_index}")
+            for value_index, lens_counts in enumerate(values):
+                print(f"  Value: {value_index}")
+                for lens_index, count in enumerate(lens_counts):
+                    print(f"\t{lens_index}: {count}")
 
     def fit(self, X, y):
         unique, counts = np.unique(y, return_counts=True)
@@ -25,70 +38,23 @@ class NBC_class(BaseEstimator, ClassifierMixin):
                     contingency_table[variable_index][value_code-1][lens_index-1] = int(count)
 
         self.contingency_table = contingency_table
-        #self.print_contingency_table()
-        # print(self.unique_labels)
-        # print(self.unique_columns)
-        # print(self.unique_prob)
-        # print(self.unique_counts)
-        # exit(0)
+        #self.print_contingency_table(short=True)
         return contingency_table
 
-    def print_contingency_table(self):
-        for variable_index, values in enumerate(self.contingency_table):
-            print(f"Variable: {variable_index}")
-            for value_index, lens_counts in enumerate(values):
-                print(f"  Value: {value_index}")
-                for lens_index, count in enumerate(lens_counts):
-                    print(f"\t{lens_index}: {count}")
+    def predict_proba(self, X):
+        prob_matrix = np.zeros((X.shape[0], len(self.classes)))
+
+        for sample_index, sample in enumerate(X):
+            for class_index in range(len(self.classes)):
+                prob = self.class_probs[class_index]
+                for attr_idx, attr_value in enumerate(sample):
+                    attr_value_idx = np.where(self.attributes[attr_idx] == attr_value)[0][0]
+                    prob *= self.contingency_tables[attr_idx][attr_value_idx, class_index]
+                prob_matrix[sample_index, class_index] = prob
+
+        prob_matrix /= prob_matrix.sum(axis=1, keepdims=True)
+        return prob_matrix
 
     def predict(self, X):
-        #return argmax(predict_proba)
-        pass
-
-    def predict_proba(self, X):
-        #ile próbek tyle wierszy
-                #tyl kolumn ile klas
-        #macierz prawdopodobieństw przynależności  do klasy
-        probabilities = np.zeros((X.shape[0], len(self.unique_labels)))
-        print(probabilities)
-        for x in X:
-            for i in range(len(self.unique_labels)):
-                pass
-
-
-
-
-
-    # def __init__(self, X, y):
-    #     self.X = X
-    #     self.y = y
-    #     self.classes = np.unique(y)
-    #     self.priors = self.get_priors()
-    #     self.likelihoods = self.get_likelihoods()
-    #
-    # def get_priors(self):
-    #     priors = {}
-    #     for c in self.classes:
-    #         priors[c] = np.sum(self.y == c) / len(self.y)
-    #     return priors
-    #
-    # def get_likelihoods(self):
-    #     likelihoods = {}
-    #     for c in self.classes:
-    #         likelihoods[c] = {}
-    #         for i in range(self.X.shape[1]):
-    #             likelihoods[c][i] = {}
-    #             for v in np.unique(self.X[:, i]):
-    #                 likelihoods[c][i][v] = np.sum((self.X[:, i] == v) & (self.y == c)) / np.sum(self.y == c)
-    #     return likelihoods
-    #
-    # def predict(self, X):
-    #     preds = []
-    #     for x in X:
-    #         probs = {}
-    #         for c in self.classes:
-    #             probs[c] = self.priors[c]
-    #             for i in range(len(x)):
-    #                 probs[c] *= self.likelihoods[c][i][x[i]]
-    #         preds.append(max(probs, key=probs.get))
-    #     return preds
+        prob_matrix = self.predict_proba(X)
+        return np.argmax(prob_matrix, axis=1)
