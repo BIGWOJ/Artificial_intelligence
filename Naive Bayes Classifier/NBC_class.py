@@ -2,91 +2,95 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 class NBC(BaseEstimator, ClassifierMixin):
-    def __init__(self, laplace=False):
+    def __init__(self, buckets_amount=None, laplace=False, logarithms=False):
         self.laplace = laplace
-        self.contingency_table = None
+        self.logarithms = logarithms
+        self.classes_ = None
+        self.attributes_probabilities = None
+        self.classes_probabilities = None
+        self.buckets_amount = buckets_amount
 
-    def print_contingency_table(self, short=False):
-        if short:
-            for table in self.contingency_table:
-                print(table)
+    def discretize(self, X):
+        discretized_X = []
+        for attribute in range(X.shape[1]):
+            data = X[:, attribute]
+            #print(self.buckets_amount)
+            bin_size = (np.max(data) - np.min(data)) / self.buckets_amount
+            for i in range(len(data)):
+                #print(int(min))
+               # exit(0)
+                bin_num = int((data[i] - np.min(data)) / bin_size)
+                if bin_num == self.buckets_amount:
+                    bin_num -= 1
+                discretized_X.append(bin_num)
+            #discretized_X.append()
+        #
+        # for i in range(len(data)):
+        #     bin_num = int((data[i] - min) / bin_size)
+        #     if bin_num == num_bins:
+        #         bin_num -= 1
+        #     discretized_data.append(bin_num)
 
-        for variable_index, values in enumerate(self.contingency_table):
-            print(f"Variable: {variable_index}")
-            for value_index, lens_counts in enumerate(values):
-                print(f"  Value: {value_index}")
-                for lens_index, count in enumerate(lens_counts):
-                    print(f"\t{lens_index}: {count}")
+        return np.array(discretized_X).reshape(X.shape)
 
     def fit(self, X, y):
-        unique, counts = np.unique(y, return_counts=True)
-        self.classes = unique
-        self.classes_counts = counts
-        self.classes_probabilities = counts / sum(counts)
+        m, n = X.shape
+        if not np.issubdtype(X.dtype, np.integer):
+            X = self.discretize(X)
+            print(X)
 
-        contingency_table = []
-        self.attributes_possibilities = []
+        self.classes_, class_counts = np.unique(y, return_counts=True)
+        K = len(self.classes_)
+        self.classes_probabilities = class_counts / m
 
-        for column in range(X.shape[1]):
-            self.attributes_possibilities.append(np.unique(X[:, column]))
-            contingency_table.append(np.zeros((len(self.attributes_possibilities[-1]), len(self.classes))))
-
+        # Tworzenie tablicy prawdopodobieństw warunkowych
         self.attributes_probabilities = []
-        for variable_index in range(len(self.attributes_possibilities)):
+        for j in range(n):
             attribute_probabilities = []
-            for value_code in self.attributes_possibilities[variable_index]:
+            for value in np.unique(X[:, j]):
                 value_probabilities = []
-                for lens_index in self.classes:
-                    lens_index = int(lens_index)
-                    count = np.sum((X[:, variable_index] == value_code) & (y == lens_index))
-                    contingency_table[variable_index][value_code-1][lens_index-1] = int(count)
-                    value_probabilities.append(count / self.classes_counts[lens_index-1])
-
+                for class_index, class_label in enumerate(self.classes_):
+                    count = np.sum((X[:, j] == value) & (y == class_label))
                     if self.laplace:
                         count += 1
-                        denominator = self.classes_counts[lens_index - 1] + len(
-                            self.attributes_possibilities[variable_index])
+                        denominator = class_counts[class_index] + len(np.unique(X[:, j]))
                     else:
-                        denominator = self.classes_counts[lens_index - 1]
-                    probability = count / denominator
-
+                        denominator = class_counts[class_index]
+                    value_probabilities.append(count / denominator)
                 attribute_probabilities.append(value_probabilities)
-            self.attributes_probabilities.append(attribute_probabilities)
-
-        #print(self.attributes_possibilities)
-        #print(self.attributes_probabilities)
-        #print(self.classes_probabilities)
-        #exit(0)
-
-        for variable_index in range(len(self.attributes_possibilities)):
-            for value_code in self.attributes_possibilities[variable_index]:
-                for lens_index in self.classes:
-                    count = np.sum((X[:, variable_index] == value_code) & (y == lens_index))
-                    contingency_table[variable_index][value_code-1][lens_index-1] = int(count)
-
-        self.contingency_table = contingency_table
-        #print(self.attributes_possibilities)
-
-
-
-        #self.print_contingency_table(short=True)
-        #print(self.classes_counts)
-        #print(self.classes_probabilities)
-        #print(self.attributes_possibilities)
-        #exit(0)
-        return contingency_table
+            self.attributes_probabilities.append(np.array(attribute_probabilities))
+        return self
 
     def predict_proba(self, X):
-        probabilities = np.ones((X.shape[0], len(self.classes)))
+        m, n = X.shape
+        K = len(self.classes_)
+        eps = 1e-300  # Zapobieganie zerowym prawdopodobieństwom
 
-        for i in range(X.shape[0]):
-            for y_index in range(len(self.classes)):
-                probabilities[i, y_index] *= self.classes_probabilities[y_index]
-                for j in range(X.shape[1]):
-                    probabilities[i, y_index] *= self.attributes_probabilities[j][X[i, j] - 1][y_index]
+        # Obliczanie prawdopodobieństw dla każdej klasy
+        if not self.logarithms:
+            probabilities = np.ones((m, K))
+            for i in range(m):
+                for y_index in range(K):
+                    for j in range(n):
+                        value_index = np.where(np.unique(X[:, j]) == X[i, j])[0][0]
+                        probabilities[i, y_index] *= max(self.attributes_probabilities[j][value_index, y_index], eps)
+                    probabilities[i, y_index] *= max(self.classes_probabilities[y_index], eps)
+        else:
+            probabilities = np.zeros((m, K))
+            for i in range(m):
+                for y_index in range(K):
+                    probabilities[i, y_index] += np.log(max(self.classes_probabilities[y_index], eps))
+                    for j in range(n):
+                        value_index = np.where(np.unique(X[:, j]) == X[i, j])[0][0]
+                        probabilities[i, y_index] += np.log(max(self.attributes_probabilities[j][value_index, y_index], eps))
 
-        #print(probabilities)
+            # Konwersja log-prawdopodobieństw na rzeczywiste prawdopodobieństwa
+            probabilities -= probabilities.max(axis=1, keepdims=True)
+            probabilities = np.exp(probabilities)
+
+        # Normalizacja wyników
+        probabilities /= probabilities.sum(axis=1, keepdims=True)
         return probabilities
 
     def predict(self, X):
-        return np.argmax(self.predict_proba(X), axis=1)
+        return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
