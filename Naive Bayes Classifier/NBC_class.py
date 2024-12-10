@@ -25,6 +25,7 @@ class NBC(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         self.classes, class_counts = np.unique(y, return_counts=True)
+        #Calculating apriori probabilities
         self.classes_probabilities = class_counts / len(self.classes)
 
         self.attributes_probabilities = []
@@ -34,7 +35,7 @@ class NBC(BaseEstimator, ClassifierMixin):
                 value_probabilities = []
                 for class_index, class_label in enumerate(self.classes):
                     count = np.sum((X[:, j] == value) & (y == class_label))
-                    #P(A) ~= (k+1) / m + q -> PDF
+                    #P(A) ~= (k+1) / m + q
                     if self.laplace:
                         count += 1
                         denominator = class_counts[class_index] + len(np.unique(X[:, j]))
@@ -47,10 +48,12 @@ class NBC(BaseEstimator, ClassifierMixin):
 
         return self
 
+    #Calculating posteriori probabilities
     def predict_proba(self, X):
         samples_amount, attributes_amount = X.shape
         epsilon = 1e-100
 
+        #Using logarithms to avoid underflow
         if self.logarithms:
             probabilities = np.zeros((samples_amount, len(self.classes)))
             for i in range(samples_amount):
@@ -71,5 +74,6 @@ class NBC(BaseEstimator, ClassifierMixin):
 
         return probabilities
 
+    #Predicting class labels
     def predict(self, X):
         return self.classes[np.argmax(self.predict_proba(X), axis=1)]

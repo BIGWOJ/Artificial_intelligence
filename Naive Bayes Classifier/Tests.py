@@ -3,6 +3,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 import NBC_class
 
+#Discretization function
 def discretize(data, num_bins, min, max):
     bin_size = (max - min) / num_bins
     discretized_data = []
@@ -17,6 +18,7 @@ def discretize(data, num_bins, min, max):
 
 def wine():
     wine_data = np.genfromtxt('wine.data', delimiter=',')
+    #Getting data and labels
     X = wine_data[:, 1:]
     y = wine_data[:, -1]
 
@@ -45,6 +47,7 @@ def wine():
             X_test_discretized.append(discretize(data, bucket_amount, np.min(data), np.max(data)))
         X_test = np.array(X_test_discretized).T
 
+        #Using different NBC configurations
         NBC = NBC_class.NBC(buckets_amount=bucket_amount)
         NBC.fit(X_train, y_train)
         y_pred = NBC.predict(X_test)
