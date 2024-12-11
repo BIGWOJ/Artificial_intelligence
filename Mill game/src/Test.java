@@ -1,7 +1,9 @@
 public class Test {
+    //Testing exmaples given in the PDF - all of them are working as expected
     public static void pdf_example(int example, char first_move) {
         Mill initial_state = new Mill(first_move);
         switch(example) {
+            //Example 1 - empty board
             case 1:
                 break;
 
@@ -31,6 +33,7 @@ public class Test {
                 initial_state.black_pieces_to_place = 0;
                 break;
         }
+        //Calculate the number of states
         for (int depth = 1; depth <= 6; depth++) {
             int totalStates = Mill.calculate_states(initial_state, depth);
             System.out.println("Total states at depth " + depth + ": " + totalStates);
@@ -39,6 +42,7 @@ public class Test {
     }
 
     public static void play() {
+        //Setting first move to black
         Mill initial_state = new Mill('B');
         Mill.setHFunction(new heuristic_class());
         initial_state.play();

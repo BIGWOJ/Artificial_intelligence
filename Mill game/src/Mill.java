@@ -15,6 +15,7 @@ public class Mill extends GameStateImpl {
     public int white_pieces_to_place = 9;
     public int black_pieces_to_place = 9;
 
+    //Constructor with first turn flag
     public Mill(char first_turn){
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 8; j++) {
@@ -24,6 +25,7 @@ public class Mill extends GameStateImpl {
         }
     }
 
+    //Representation of the board
     @Override
     public String toString() {
         StringBuilder mill_board = new StringBuilder();
@@ -43,6 +45,7 @@ public class Mill extends GameStateImpl {
         return mill_board.toString();
     }
 
+    //Using by player to place piece
     public void place_piece(int row, int col, char player){
         if (board[row][col] != ' '){
             do {
@@ -73,6 +76,7 @@ public class Mill extends GameStateImpl {
         }
     }
 
+    //Asking again for a move if the move is invalid
     public int[] invalid_move() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter square: ");
@@ -83,6 +87,7 @@ public class Mill extends GameStateImpl {
         return new int []{new_row, new_col};
     }
 
+    //Using by player to move piece
     public void move_piece(int row, int col, int new_row, int new_col, char player) {
         if (board[new_row][new_col] != ' ') {
             do {
@@ -115,6 +120,7 @@ public class Mill extends GameStateImpl {
         board[row][col] = ' ';
     }
 
+    //Function checking if the mill is created
     public boolean mill_created(int row, int col, char player) {
 
         //Piece at corner
@@ -160,6 +166,7 @@ public class Mill extends GameStateImpl {
         return false;
     }
 
+    //Generating children of the current state when the mill is created
     public List<Mill> handle_mill_generate_children() {
         List<Mill> mill_children = new ArrayList<>();
 
@@ -213,6 +220,7 @@ public class Mill extends GameStateImpl {
         return mill_children;
     }
 
+    //Handling the mill created by the player
     public void handle_mill_player() {
         boolean piece_removed = false;
         Scanner scanner = new Scanner(System.in);
@@ -240,6 +248,7 @@ public class Mill extends GameStateImpl {
         }
     }
 
+    //Generating children of the current state
     @Override
     public List<GameState> generateChildren() {
         List<GameState> children = new ArrayList<>();
@@ -248,7 +257,7 @@ public class Mill extends GameStateImpl {
         boolean is_moving_phase = (white_pieces_to_place == 0 && black_pieces_to_place == 0);
         boolean is_jumping_phase = (maximizingTurnNow && white_pieces_counter == 3 || !maximizingTurnNow && black_pieces_counter == 3) && is_moving_phase;
 
-        //Placement phase
+        //I phase - placement
         if (is_placement_phase) {
             for (int square = 0; square < 3; square++) {
                 for (int position = 0; position < 8; position++) {
@@ -283,7 +292,7 @@ public class Mill extends GameStateImpl {
             }
         }
 
-        //Moving phase
+        //II phase - moving
         else if (!is_jumping_phase) {
             if ((white_pieces_counter <3) || (black_pieces_counter < 3)) {
                 return children;
@@ -293,16 +302,12 @@ public class Mill extends GameStateImpl {
                     if (board[square][position] == (maximizingTurnNow ? 'W' : 'B')) {
 
                         //Iterate over all neighbors of this position
-                        //System.out.println(square + ", " + position);
                         for (int[] neighbor : get_neighbors(square, position)) {
-                            //System.out.println("\t" + neighbor[0] + ", " + neighbor[1]);
                             int neighbor_square = neighbor[0];
                             int neighbor_position = neighbor[1];
 
                             if (board[neighbor_square][neighbor_position] == ' ') {
                                 Mill child = new Mill(this);
-                                //System.out.println(child);
-                                //System.out.println("Moving piece from [" + square + ", " + position + "] to [" + neighbor_square + ", " + neighbor_position + "]");
                                 child.board[square][position] = ' ';
                                 child.board[neighbor_square][neighbor_position] = maximizingTurnNow ? 'W' : 'B';
 
@@ -326,7 +331,7 @@ public class Mill extends GameStateImpl {
             }
         }
 
-        //Jumping phase
+        //III phase - jumping
         else {
             if ((white_pieces_counter <3) || (black_pieces_counter < 3)) {
                 return children;
@@ -334,13 +339,11 @@ public class Mill extends GameStateImpl {
             for (int square = 0; square < 3; square++) {
                 for (int position = 0; position < 8; position++) {
                     if (board[square][position] == (maximizingTurnNow ? 'W' : 'B')) {
-                        //List<int[]> available_moves = get_available_jumps();
                         for (int[] available_move : get_available_jumps()) {
                             int new_square = available_move[0];
                             int new_position = available_move[1];
 
                             Mill child = new Mill(this);
-                            //System.out.println(child);
                             child.board[square][position] = ' ';
                             child.board[new_square][new_position] = maximizingTurnNow ? 'W' : 'B';
 
@@ -366,6 +369,7 @@ public class Mill extends GameStateImpl {
         return children;
     }
 
+    //Getting neighbors of the current position
     public List<int[]> get_neighbors(int square, int position) {
         List<int[]> neighbors = new ArrayList<>();
 
@@ -382,6 +386,7 @@ public class Mill extends GameStateImpl {
         return neighbors;
     }
 
+    //Getting available jumps (empty squares)
     public List<int[]> get_available_jumps() {
         List<int[]> available_moves = new ArrayList<>();
 
@@ -395,7 +400,8 @@ public class Mill extends GameStateImpl {
         return available_moves;
     }
 
-    public boolean get_available_moves(char player) {
+    //Checking if player has any available move
+    public boolean any_available_move(char player) {
         for (int square = 0; square < 3; square++) {
             for (int position = 0; position < 8; position++) {
                 if (board[square][position] == player) {
@@ -413,6 +419,7 @@ public class Mill extends GameStateImpl {
         return false;
     }
 
+    //Calculating the number of states at a given depth
     public static int calculate_states(Mill state, int depth) {
         if (depth == 0) {
             return 1;
@@ -446,6 +453,7 @@ public class Mill extends GameStateImpl {
         }
     }
 
+    //Overriding hashCode method
     @Override
     public int hashCode() {
         StringBuilder board = new StringBuilder();
@@ -457,65 +465,7 @@ public class Mill extends GameStateImpl {
         return board.hashCode();
     }
 
-    public void play_pdf() {
-        Mill game = new Mill('W');
-        GameSearchAlgorithm algorithm = new AlphaBetaPruning();
-
-        String turn;
-        //Human turn
-        maximizingTurnNow = true;
-        while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
-            List<GameState> children = game.generateChildren();
-            for (GameState child : children) {
-                Scanner scanner = new Scanner(System.in);
-                turn = scanner.nextLine();
-                if (turn.equals(child.getMoveName())) {
-                    game = (Mill) child;
-                    break;
-                } else {
-                    System.out.println("Invalid move. Try again.");
-                    turn = scanner.nextLine();
-                }
-
-                if (game.isWinTerminal() || game.isNonWinTerminal()) {
-                    break;
-                }
-                children = game.generateChildren();
-                algorithm.setInitial(game);
-                algorithm.execute();
-                turn = algorithm.getFirstBestMove();
-
-            }
-
-
-            //Computer turn
-            maximizingTurnNow = true;
-            while (!game.isWinTerminal() && !game.isNonWinTerminal()) {
-                children = game.generateChildren();
-                algorithm.setInitial(game);
-                algorithm.execute();
-                turn = algorithm.getFirstBestMove();
-                for (GameState child : children) {
-                    if (turn.equals(child.getMoveName())) {
-                        game = (Mill) child;
-                        break;
-                    } else {
-                        turn = algorithm.getFirstBestMove();
-                    }
-
-                    if (game.isWinTerminal() || game.isNonWinTerminal()) {
-                        break;
-                    }
-                    children = game.generateChildren();
-                    algorithm.setInitial(game);
-                    algorithm.execute();
-                    turn = algorithm.getFirstBestMove();
-
-                }
-            }
-        }
-    }
-
+    //AI has first move
     public void play_ai() {
         Scanner scanner = new Scanner(System.in);
         Mill game = new Mill('W');
@@ -685,6 +635,7 @@ public class Mill extends GameStateImpl {
         }
     }
 
+    //Human has first move
     public void play() {
         Scanner scanner = new Scanner(System.in);
         Mill game = new Mill('W');
@@ -850,18 +801,21 @@ public class Mill extends GameStateImpl {
     }
 }
 
+//Heuristic function
 class heuristic_class extends StateFunction {
     @Override
     public double calculate(State state) {
         Mill mill = (Mill) state;
+        //Returning +-infinity if the W/B player has winning position
         if (mill.white_pieces_to_place + mill.black_pieces_to_place == 0) {
-            if (mill.black_pieces_counter <= 2 || !mill.get_available_moves('B')) {
+            if (mill.black_pieces_counter <= 2 || !mill.any_available_move('B')) {
                 return Double.POSITIVE_INFINITY;
             }
-            else if (mill.white_pieces_counter <= 2 || !mill.get_available_moves('W')) {
+            else if (mill.white_pieces_counter <= 2 || !mill.any_available_move('W')) {
                 return Double.NEGATIVE_INFINITY;
             }
         }
+        //Return the difference between the number of white and black pieces
         return mill.white_pieces_counter - mill.black_pieces_counter;
     }
 }
