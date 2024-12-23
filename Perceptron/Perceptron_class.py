@@ -1,35 +1,53 @@
 import numpy as np
 
 class Perceptron:
-    def __init__(self, learning_rate=0.01, max_iterations=1000):
+    def __init__(self, learning_rate=0.01):
         self.learning_rate = learning_rate
-        self.max_iterations = max_iterations
+        self.max_iterations = 1000
+        self.iterations_done = 0
         self.weights = None
-        self.bias = None
-
-    def fit(self, X, y):
-        self.weights = np.random.rand(X.shape[1])
         self.bias = 0
 
-        #y_ = np.array([1 if i > 0 else 0 for i in y])
+    def fit(self, X, y):
+        self.weights = np.ones(X.shape[1])
+        self.iterations_done = 0
+        previous_weights = np.ones_like(self.weights)
+        previous_bias = 0
+        epsilon = 0.0001
 
-        for _ in range(self.max_iterations):
-            for idx, x_i in enumerate(X):
-                linear_output = np.dot(x_i, self.weights) + self.bias
+        while True:
+            max_delta = 0
+            for index, sample in enumerate(X):
+                linear_output = np.dot(sample, self.weights) + self.bias
                 y_predicted = self.decision_function(linear_output)
+                #Update weight -> weight += delta weight
+                #Update bias -> bias += delta bias
+                #Update (delta) -> learning rate * (y_actual - y_predicted)
 
-                #Update
-                update = self.learning_rate * (y[idx] - y_predicted)
-
-                self.weights += update * x_i
+                #If delta is positive, the weight needs to be increased
+                #If delta is negative, the weight needs to be decreased
+                #Bias is used to move the decision boundary
+                update = self.learning_rate * (y[index] - y_predicted)
+                self.weights += update * sample
                 self.bias += update
+                max_delta = max(max_delta, abs(update), np.linalg.norm(update * sample))
+
+            weight_change = np.linalg.norm(self.weights - previous_weights)
+            bias_change = abs(self.bias - previous_bias)
+
+            if max(weight_change, bias_change) < epsilon:
+                self.iterations_done = max(self.iterations_done, 1)
+                break
+
+            previous_weights = self.weights.copy()
+            previous_bias = self.bias
+            self.iterations_done += 1
+            if self.iterations_done > self.max_iterations:
+                break
 
     def predict(self, X):
-        linear_output = np.dot(X, self.weights) + self.bias
-        #y_predicted = self.activation_func(linear_output)
-        y_predicted = self.decision_function(linear_output)
-        return y_predicted
+        weighted_sum = np.dot(X, self.weights) + self.bias
+        return self.decision_function(weighted_sum)
 
     def decision_function(self, x):
         return np.where(x >= 0, 1, 0)
-
