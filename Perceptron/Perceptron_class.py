@@ -16,10 +16,9 @@ class Perceptron:
         epsilon = 0.0001
 
         while True:
-            max_delta = 0
             for index, sample in enumerate(X):
-                linear_output = np.dot(sample, self.weights) + self.bias
-                y_predicted = self.decision_function(linear_output)
+                weighted_sum = np.dot(sample, self.weights) + self.bias
+                y_predicted = self.decision_function(weighted_sum)
                 #Update weight -> weight += delta weight
                 #Update bias -> bias += delta bias
                 #Update (delta) -> learning rate * (y_actual - y_predicted)
@@ -30,22 +29,19 @@ class Perceptron:
                 update = self.learning_rate * (y[index] - y_predicted)
                 self.weights += update * sample
                 self.bias += update
-                max_delta = max(max_delta, abs(update), np.linalg.norm(update * sample))
 
             weight_change = np.linalg.norm(self.weights - previous_weights)
             bias_change = abs(self.bias - previous_bias)
 
-            if max(weight_change, bias_change) < epsilon:
-                self.iterations_done = max(self.iterations_done, 1)
+            self.iterations_done += 1
+            if self.iterations_done > self.max_iterations or max(weight_change, bias_change) < epsilon:
                 break
 
             previous_weights = self.weights.copy()
             previous_bias = self.bias
-            self.iterations_done += 1
-            if self.iterations_done > self.max_iterations:
-                break
 
     def predict(self, X):
+        #Weighted sum from perceptron model
         weighted_sum = np.dot(X, self.weights) + self.bias
         return self.decision_function(weighted_sum)
 

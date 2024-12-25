@@ -8,6 +8,7 @@ def accuracy(y_true, y_pred):
     return np.round(np.sum(y_true == y_pred) / len(y_true), 2)
 
 def test_1():
+    #Generating random line separable data
     n = 1000
     data = np.random.rand(n, 2) * 2 - 1
 
@@ -19,6 +20,7 @@ def test_1():
     alpha = np.random.uniform(0, 2 * np.pi)
     data = data @ [[np.cos(alpha), -np.sin(alpha)], [np.sin(alpha), np.cos(alpha)]]
 
+    #Setting testing values
     learning_rates = [0, 0.1, 0.5, 1]
     test_sizes = [0.1, 0.3, 0.5, 0.7]
 
