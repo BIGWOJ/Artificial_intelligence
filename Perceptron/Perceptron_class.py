@@ -45,5 +45,6 @@ class Perceptron:
         weighted_sum = np.dot(X, self.weights) + self.bias
         return self.decision_function(weighted_sum)
 
+    #Activation function
     def decision_function(self, x):
         return np.where(x >= 0, 1, 0)

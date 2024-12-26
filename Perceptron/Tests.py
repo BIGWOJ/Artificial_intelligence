@@ -21,7 +21,7 @@ def test_1():
     data = data @ [[np.cos(alpha), -np.sin(alpha)], [np.sin(alpha), np.cos(alpha)]]
 
     #Setting testing values
-    learning_rates = [0, 0.1, 0.5, 1]
+    learning_rates = [0, 0.1, 0.5, 0.9]
     test_sizes = [0.1, 0.3, 0.5, 0.7]
 
     for test_size in test_sizes:
